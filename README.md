@@ -29,7 +29,7 @@ This application can be run locally on macOS with Apple Silicon.
 
 1.  **Clone the repository:**
     ```bash
-    git clone (https://github.com/aperry938/zenith-mvp)
+    git clone https://github.com/aperry938/zenith-mvp
     cd zenith-mvp
     ```
 2.  **Create and activate the Conda environment:**
