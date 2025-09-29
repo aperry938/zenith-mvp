@@ -9,7 +9,7 @@
 
 ### Demo Video
 
-*A short video demonstrating the live application can be found here: [Link to your YouTube/Vimeo Demo]*
+*A short video demonstrating the live application can be found here: [![Watch the ZENith Demo Video](https://img.youtube.com/vi/lPnmOBwJfkE/0.jpg)](https://youtu.be/lPnmOBwJfkE)
 
 ---
 
