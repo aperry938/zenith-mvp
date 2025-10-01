@@ -35,7 +35,7 @@ The live application provides a rich, data-driven overlay on the user's video fe
 
 | Correct Warrior II | Correct Crescent Lunge |
 | :---: | :---: |
-| ![Correct Warrior Pose Demo](docs/warrior_correct.jpg) | ![Correct Crescent Pose Demo](docs/crescent_correct.png.jpg) |
+| ![Correct Warrior Pose Demo](docs/warrior_correct.png) | ![Correct Crescent Pose Demo](docs/crescent_correct.png) |
 
 
 ### How to Reproduce
