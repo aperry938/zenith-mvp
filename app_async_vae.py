@@ -33,9 +33,54 @@ except Exception:
 tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.threading.set_inter_op_parallelism_threads(1)
 
+# ---------- SESSION RECORD (NEW) ----------
+class SessionRecorder:
+    def __init__(self):
+        self.start_time = time.time()
+        self.total_frames = 0
+        self.flow_scores = []
+        self.stability_events = 0
+        self.stability_seconds = 0.0
+        self.poses_detected = Counter()
+
+    def update(self, pose_label, flow_score, is_stable, fps):
+        self.total_frames += 1
+        if flow_score is not None:
+            self.flow_scores.append(flow_score)
+        if is_stable and fps > 0:
+            self.stability_seconds += (1.0 / fps)
+        if pose_label:
+            self.poses_detected[pose_label] += 1
+    
+    def log_stability_event(self):
+        self.stability_events += 1
+
+    def get_summary(self):
+        duration = time.time() - self.start_time
+        avg_flow = sum(self.flow_scores) / len(self.flow_scores) if self.flow_scores else 0
+        return {
+            "Duration": f"{int(duration)}s",
+            "Avg Flow": f"{int(avg_flow)}",
+            "Stability Events": self.stability_events,
+            "Zone Time": f"{self.stability_seconds:.1f}s",
+            "Top Pose": self.poses_detected.most_common(1)[0][0] if self.poses_detected else "None"
+        }
+
+# Global Session
+if 'session' not in st.session_state:
+    st.session_state['session'] = SessionRecorder()
+session = st.session_state['session']
+
+
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Persona (Beta)")
-st.write("A Dynamic AI Coach that learns, adapts, and speaks with variety.")
+st.title("ZENith $ZEN^{ith}$ - The Record (Beta)")
+col1, col2, col3, col4 = st.columns(4)
+metrics = session.get_summary()
+col1.metric("Avg Flow", metrics["Avg Flow"])
+col2.metric("In The Zone", metrics["Zone Time"])
+col3.metric("Locks", metrics["Stability Events"])
+col4.metric("Top Pose", metrics["Top Pose"])
+
 use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
 use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
 use_ar   = st.sidebar.checkbox("Enable Visual Whispers (AR)", value=True)
@@ -51,9 +96,8 @@ DEC_W_PATH = "zenith_decoder_weights.weights.h5"
 POSE_NAMES = ["Chair","Downward Dog","Extended Side Angle","High Lunge","Mountain Pose","Plank","Tree","Triangle","Warrior II"]
 INT_TO_POSE = {i:n for i,n in enumerate(POSE_NAMES)}
 
-# ---------- TTS ENGINE (Thread-Safe) ----------
+# ---------- TTS ENGINE ----------
 tts_queue = queue.Queue()
-
 def tts_worker():
     try:
         import pyttsx3
@@ -70,7 +114,6 @@ def tts_worker():
             tts_queue.task_done()
     except ImportError:
         print("pyttsx3 not installed. Voice disabled.")
-
 threading.Thread(target=tts_worker, daemon=True).start()
 
 # Debounce State
@@ -82,7 +125,6 @@ active_correction = None
 stability_start_time = None
 is_locked = False
 STABILITY_THRESHOLD = 3.0
-# Dynamic Rewards
 LOCKED_PHRASES = ["Locked.", "Solid.", "Perfect.", "Holding strong.", "That's it."]
 
 # Flow Metric State
@@ -106,7 +148,6 @@ except Exception as e:
 # ---------- VAE (non-blocking) ----------
 encoder = decoder = None
 vae_ok = False
-
 def build_vae(input_dim=132, latent_dim=16):
     class Sampling(layers.Layer):
         def call(self, inputs):
@@ -180,7 +221,7 @@ def calculate_flow(curr_flat, prev_flat, dt, prev_v):
     score = 100.0 - punishment
     return float(np.clip(score, 0, 100)), velocity
 
-
+# --- DRAWING UTILS ---
 def draw_hud(img, label, q, fps):
     cv2.rectangle(img,(20,20),(520,120),(65,109,255),-1)
     cv2.putText(img,f"POSE: {label or '—'}",(35,60),cv2.FONT_HERSHEY_SIMPLEX,0.95,(255,255,255),2,cv2.LINE_AA)
@@ -207,14 +248,12 @@ def draw_flow_bar(img, score):
     cv2.rectangle(img, (x, y), (x+fill_w, y+bar_h), color, -1)
     cv2.putText(img, f"FLOW: {int(score)}", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2, cv2.LINE_AA)
 
-
 def draw_ar_arrow(img, start_norm, end_norm, color=(255, 255, 0), thickness=4, text=None):
     h, w, _ = img.shape
     start_px = (int(start_norm[0] * w), int(start_norm[1] * h))
     end_px   = (int(end_norm[0] * w), int(end_norm[1] * h))
     cv2.arrowedLine(img, start_px, end_px, color, thickness, tipLength=0.3)
     cv2.circle(img, end_px, 6, (255,255,255), -1)
-    # HUD text near arrow
     if text:
         cv2.putText(img, text, (end_px[0]+10, end_px[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
 
@@ -240,11 +279,14 @@ def draw_stability_halo(img, landmarks, progress, is_locked):
         end_angle = int(360 * progress)
         cv2.ellipse(img, (center_x, center_y), (axis_x, axis_y), 0, 0, end_angle, color, thickness)
 
+# --- PROCESSING LOOP ---
 def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     global i, fps, t0, last_label, last_ok_ts, vae_future, last_q, last_spoken_time, active_correction
     global stability_start_time, is_locked, STABILITY_THRESHOLD
     global prev_landmarks_array, current_flow_score, prev_velocity, flow_history
-
+    # Session global
+    global session
+    
     img = frame.to_ndarray(format="bgr24")
 
     # FPS
@@ -291,13 +333,11 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                         stability_start_time = None
                         is_locked = False
                         
-                        # PARSE SHORT VS LONG TEXT
                         text_data = correction['text']
                         hud_text = text_data
                         spoken_text = text_data
                         if isinstance(text_data, tuple):
                             hud_text, spoken_text = text_data
-                            # Store it back so active_correction uses short text for visual
                             active_correction['hud_text'] = hud_text
 
                         if use_tts:
@@ -312,6 +352,7 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                             duration = time.time() - stability_start_time
                             if duration > STABILITY_THRESHOLD and not is_locked:
                                 is_locked = True
+                                session.log_stability_event() # Log Lock event
                                 if use_tts: 
                                     reward_phrase = random.choice(LOCKED_PHRASES)
                                     tts_queue.put(reward_phrase)
@@ -333,6 +374,10 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     i += 1
     if (time.time() - last_ok_ts) < TTL: label = label or last_label
 
+    # --- RECORD SESSION DATA ---
+    is_stable_now = (stability_start_time is not None)
+    session.update(label, current_flow_score if use_flow else None, is_stable_now, fps)
+
     # --- RENDER VISUAL LAYERS ---
     if use_gamification and stability_start_time is not None and res.pose_landmarks:
         duration = time.time() - stability_start_time
@@ -342,10 +387,8 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     if use_ar and active_correction:
         if 'vector' in active_correction:
             start_pt, end_pt = active_correction['vector']
-            # Use HUD short text if available
             ar_text = active_correction.get('hud_text', active_correction.get('text'))
-            if isinstance(ar_text, tuple): ar_text = ar_text[0] # Fallback
-            
+            if isinstance(ar_text, tuple): ar_text = ar_text[0]
             draw_ar_arrow(img, start_pt, end_pt, color=(255, 255, 0), text=ar_text)
             
     if use_flow:
