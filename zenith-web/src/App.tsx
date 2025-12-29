@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { VideoStage } from './components/VideoStage';
 import { HUD } from './components/HUD';
 import { GhostOverlay } from './components/GhostOverlay';
@@ -5,6 +6,7 @@ import { SessionControls } from './components/SessionControls';
 import { GenerativeCoach } from './components/GenerativeCoach';
 import { SequenceDisplay } from './components/SequenceDisplay';
 import { useZenithConnection } from './hooks/useZenithConnection';
+import { useZenithVoice } from './hooks/useZenithVoice';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function ZenithApp() {
@@ -18,18 +20,31 @@ function ZenithApp() {
     isRecording,
     isHarvesting,
     sequenceState,
+    voiceMessage,
+    clearVoiceMessage,
     sendFrame,
     requestAnalysis,
     toggleRecording,
     toggleHarvesting
   } = useZenithConnection();
 
+  // TTS Engine
+  const { speak } = useZenithVoice();
+
+  // Handle Incoming Voice Messages from Sequencer
+  useEffect(() => {
+    if (voiceMessage) {
+      speak(voiceMessage);
+      clearVoiceMessage();
+    }
+  }, [voiceMessage, speak, clearVoiceMessage]);
+
   return (
     <div className="w-screen h-screen flex flex-col bg-zenith-bg text-gray-100 overflow-hidden">
       {/* Header */}
       <header className="h-16 border-b border-zinc-800 flex justify-between items-center px-8 bg-zenith-panel z-10 relative">
         <div className="font-bold text-2xl tracking-widest text-white uppercase">
-          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.0 (Teacher)</span>
+          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.1 (Voice)</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -40,8 +55,8 @@ function ZenithApp() {
             </span>
           )}
           <div className={`px-3 py-1 rounded text-xs font-bold tracking-wider transition-colors duration-500 ${isConnected
-              ? 'bg-zenith-neonGreen text-black shadow-[0_0_10px_rgba(0,255,153,0.3)]'
-              : 'bg-zinc-800 text-zinc-500'
+            ? 'bg-zenith-neonGreen text-black shadow-[0_0_10px_rgba(0,255,153,0.3)]'
+            : 'bg-zinc-800 text-zinc-500'
             }`}>
             {isConnected ? 'LIVE' : isConnecting ? 'CONNECTING...' : 'OFFLINE'}
           </div>
@@ -75,7 +90,7 @@ function ZenithApp() {
 
       {/* Footer */}
       <footer className="h-10 border-t border-zinc-800 flex justify-center items-center text-xs text-zinc-600 bg-zenith-panel z-10 relative">
-        <p>Cycle 38: The Teacher</p>
+        <p>Cycle 39: The Voice of Flow</p>
       </footer>
     </div>
   );

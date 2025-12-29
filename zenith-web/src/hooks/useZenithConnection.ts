@@ -19,6 +19,7 @@ interface ZenithMetrics {
     is_recording?: boolean;
     is_harvesting?: boolean;
     sequence_state?: SequenceState;
+    voice_message?: string;
 }
 
 export const useZenithConnection = () => {
@@ -35,6 +36,9 @@ export const useZenithConnection = () => {
 
     // Sequencer State
     const [sequenceState, setSequenceState] = useState<SequenceState | null>(null);
+
+    // Voice Queue (Simple string for now)
+    const [voiceMessage, setVoiceMessage] = useState<string | null>(null);
 
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<number | undefined>(undefined);
@@ -59,8 +63,6 @@ export const useZenithConnection = () => {
         wsRef.current.onclose = () => {
             console.log("Zenith: Disconnected");
             setIsConnected(false);
-            setIsConnecting(true); // Technically waiting to connect
-            reconnectTimeoutRef.current = setTimeout(connect, 3000);
         };
 
         wsRef.current.onerror = (err) => {
@@ -84,6 +86,11 @@ export const useZenithConnection = () => {
 
                     // Sequencer
                     if (data.sequence_state) setSequenceState(data.sequence_state);
+
+                    // Voice
+                    if (data.voice_message) {
+                        setVoiceMessage(data.voice_message);
+                    }
                 }
             } catch (e) {
                 console.error("Parse Error", e);
@@ -126,6 +133,11 @@ export const useZenithConnection = () => {
         }
     }, []);
 
+    // Clear voice message after consumption
+    const clearVoiceMessage = useCallback(() => {
+        setVoiceMessage(null);
+    }, []);
+
     return {
         isConnected,
         isConnecting,
@@ -136,6 +148,8 @@ export const useZenithConnection = () => {
         isRecording,
         isHarvesting,
         sequenceState,
+        voiceMessage,
+        clearVoiceMessage,
         sendFrame,
         requestAnalysis,
         toggleRecording,

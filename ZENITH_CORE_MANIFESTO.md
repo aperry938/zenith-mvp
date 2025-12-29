@@ -58,7 +58,8 @@
 *   **[BETA] The Polish (Frontend Optimization):** Error boundaries, robust connection handling, and UI spit-shine.
 *   **[PLANNED] The Mirage (Client-Side Visuals):** Rendering the VAE 'Ghost' and Skeleton overlays in React.
 *   **[BETA] The Generator (Placeholder AI Coach):** Visual neural presence of the AI in the interface.
-*   **[PLANNED] The Teacher (Interactive Flow):** Wiring the Pose Sequencer to the React UI for structured classes.
+*   **[BETA] The Teacher (Interactive Flow):** Wiring the Pose Sequencer to the React UI for structured classes.
+*   **[PLANNED] The Voice of Flow (Sequencer TTS):** Giving the sequencer a voice for audible guidance.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
 ## 5. Technical Architecture

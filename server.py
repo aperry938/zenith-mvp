@@ -21,7 +21,7 @@ from data_harvester import DataHarvester
 from pose_sequencer import PoseSequencer
 
 # --- SERVER SETUP ---
-app = FastAPI(title="Zenith AI Gateway", version="Cycle 38 (Teacher)")
+app = FastAPI(title="Zenith AI Gateway", version="Cycle 39 (Voice of Flow)")
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,7 +42,7 @@ latest_frame_cache = None
 
 @app.get("/")
 async def root():
-    return {"status": "Zenith AI Gateway Online", "cycle": 38}
+    return {"status": "Zenith AI Gateway Online", "cycle": 39}
 
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
@@ -117,8 +117,17 @@ async def websocket_endpoint(websocket: WebSocket):
                             "status": seq_status, # "Holding", "Advance"
                             "progress": sequencer.get_progress()
                         }
+                        
+                        # 2. Voice/Announcement Check
+                        if sequencer.has_announcement():
+                            announcement = sequencer.get_announcement()
+                            if announcement:
+                                # Send as separate message or embed? Embedded is simpler for sync
+                                # But separate prevents getting lost in rapid stream if client polls
+                                # Let's embed it in THIS frame response
+                                response["voice_message"] = announcement
 
-                        # 2. Session Recording
+                        # 3. Session Recording
                         if session_mgr.is_recording and label and result.get("flow_score") is not None:
                              session_mgr.add_frame_data(
                                  timestamp=ts,
@@ -127,7 +136,7 @@ async def websocket_endpoint(websocket: WebSocket):
                                  vae_q=result.get("vae_q", 0)
                              )
                         
-                        # 3. Data Harvesting
+                        # 4. Data Harvesting
                         if harvester.is_active and result.get("pose_landmarks"):
                              harvester.process_frame(frame, result["pose_landmarks"])
 

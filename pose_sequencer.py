@@ -1,4 +1,5 @@
 import time
+import random
 
 class PoseSequencer:
     """
@@ -23,6 +24,7 @@ class PoseSequencer:
         self.last_transition_time = time.time()
         self.pose_start_time = None
         self.completed = False
+        self._current_announcement = "Welcome to Zenith. Let's begin with Mountain Pose."
 
     def get_current_goal(self):
         if self.completed:
@@ -33,6 +35,14 @@ class PoseSequencer:
         if self.completed or self.current_index >= len(self.sequence) - 1:
             return "Finish"
         return self.sequence[self.current_index + 1]
+    
+    def has_announcement(self):
+        return self._current_announcement is not None
+        
+    def get_announcement(self):
+        msg = self._current_announcement
+        self._current_announcement = None
+        return msg
 
     def update(self, detected_label, is_stable):
         """
@@ -85,8 +95,16 @@ class PoseSequencer:
         self.current_index += 1
         self.pose_start_time = None
         self.last_transition_time = time.time()
+        
         if self.current_index >= len(self.sequence):
             self.completed = True
+            self._current_announcement = "Sequence Complete. Namaste."
+        else:
+            # Generate Transition Message
+            next_pose = self.sequence[self.current_index]
+            praises = ["Great job.", "Perfect.", "Smooth.", "Excellent."]
+            praise = random.choice(praises)
+            self._current_announcement = f"{praise} Now transition to {next_pose}."
 
     def get_progress(self):
         return (self.current_index / len(self.sequence))
