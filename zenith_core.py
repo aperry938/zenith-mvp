@@ -15,7 +15,7 @@ try:
     from session_manager import SessionManager
     from data_harvester import DataHarvester
     from vision_client import VisionClient
-    from zenith_brain import ZenithBrain # NEW
+    from zenith_brain import ZenithBrain
 except ImportError:
     print("Warning: Internal modules not found.")
 
@@ -38,10 +38,8 @@ class ZenithCore:
         self.STABILITY_THRESHOLD = 3.0
         self.LOCKED_PHRASES = ["Locked.", "Solid.", "Perfect.", "Holding strong.", "That's it."]
         
-        # flow
-        self.prev_landmarks_array = None
+        # flow (Brain manages raw calc, Core manages TTS trigger)
         self.current_flow_score = 100.0
-        self.prev_velocity = 0.0
         self.last_flow_msg_time = 0
         self.FLOW_MSG_DEBOUNCE = 10.0
         
@@ -102,25 +100,11 @@ class ZenithCore:
         img = cv2.convertScaleAbs(img, alpha=1.1, beta=0) 
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         h, s, v = cv2.split(hsv)
-        s = cv2.multiply(s, 1.2)
-        s = np.clip(s, 0, 255).astype(hsv.dtype)
-        hsv = cv2.merge([h, s, v])
-        img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        # s = cv2.multiply(s, 1.2) # Removed saturation overkill
+        # s = np.clip(s, 0, 255).astype(hsv.dtype)
+        # hsv = cv2.merge([h, s, v])
+        # img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         return img
-        
-    def landmarks_to_flat(self, lms):
-        arr = np.array([[lm.x,lm.y,lm.z,lm.visibility] for lm in lms.landmark], dtype=np.float32)
-        return arr.flatten()[None,:]
-
-    def calculate_flow(self, curr_flat, prev_flat, dt, prev_v):
-        if prev_flat is None or dt <= 0: return 100.0, 0.0
-        diff = curr_flat - prev_flat
-        dist = np.linalg.norm(diff)
-        velocity = dist / dt
-        acceleration = abs(velocity - prev_v) / dt
-        punishment = acceleration * 15.0 
-        score = 100.0 - punishment
-        return float(np.clip(score, 0, 100)), velocity
 
     def process_frame(self, frame_obj, options):
         img = frame_obj.to_ndarray(format="bgr24")
@@ -134,8 +118,8 @@ class ZenithCore:
         t1 = time.time(); dt = t1 - self.t0; self.t0 = t1
         if dt > 0: self.fps = 0.9*self.fps + 0.1*(1.0/dt) if self.fps else (1.0/dt)
 
-        # Send to Brain (Async)
-        self.brain.process_async(img.copy())
+        # Send to Brain (Async) with timestamp
+        self.brain.process_async(img.copy(), t1)
         
         # Check for new result
         new_res = self.brain.get_latest_result()
@@ -149,6 +133,7 @@ class ZenithCore:
         label = None
         q_disp = self.last_q
         pose_landmarks = None
+        velocity = 0.0
         
         if res:
             pose_landmarks = res['pose_landmarks']
@@ -156,6 +141,12 @@ class ZenithCore:
             self.last_recon = res.get('vae_recon')
             q_disp = res.get('vae_q')
             if q_disp: self.last_q = q_disp
+            
+            # Flow from Brain
+            if res.get('flow_score'):
+                self.current_flow_score = res['flow_score']
+            if res.get('velocity'):
+                velocity = res['velocity']
             
             if raw_label:
                 self.hist.append(raw_label)
@@ -197,23 +188,14 @@ class ZenithCore:
                                  if options.get('use_tts'):
                                      self.tts_queue.put(random.choice(self.LOCKED_PHRASES))
             
-            # Flow Calculation
-            if options.get('use_flow') and pose_landmarks:
-                 curr_flat = self.landmarks_to_flat(pose_landmarks)
-                 if self.prev_landmarks_array is not None:
-                     score, velocity = self.calculate_flow(curr_flat, self.prev_landmarks_array, dt, self.prev_velocity)
-                     alpha_flow = 0.15
-                     self.current_flow_score = (alpha_flow * score) + ((1-alpha_flow) * self.current_flow_score)
-                     self.prev_velocity = velocity
-                     
-                     if options.get('use_tts') and (time.time() - self.last_flow_msg_time > self.FLOW_MSG_DEBOUNCE):
-                        if self.current_flow_score < 40:
-                            self.tts_queue.put("Smooth it out.")
-                            self.last_flow_msg_time = time.time()
-                        elif self.current_flow_score > 90 and velocity > 0.1:
-                            self.tts_queue.put("Excellent flow.")
-                            self.last_flow_msg_time = time.time()
-                 self.prev_landmarks_array = curr_flat
+            # Flow TTS Logic (Brain calculated score, Core decides to speak)
+            if options.get('use_flow') and options.get('use_tts') and (time.time() - self.last_flow_msg_time > self.FLOW_MSG_DEBOUNCE):
+                if self.current_flow_score < 40:
+                    self.tts_queue.put("Smooth it out.")
+                    self.last_flow_msg_time = time.time()
+                elif self.current_flow_score > 90 and velocity > 0.1:
+                    self.tts_queue.put("Excellent flow.")
+                    self.last_flow_msg_time = time.time()
 
             # Debug Draw
             if pose_landmarks:
