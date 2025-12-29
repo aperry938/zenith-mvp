@@ -9,6 +9,8 @@ interface ZenithMetrics {
     advice?: string;
     landmarks?: Landmark[];
     ghost?: number[];
+    is_recording?: boolean;
+    is_harvesting?: boolean;
 }
 
 export const useZenithConnection = () => {
@@ -18,6 +20,10 @@ export const useZenithConnection = () => {
     const [advice, setAdvice] = useState<string | null>(null);
     const [landmarks, setLandmarks] = useState<Landmark[] | null>(null);
     const [ghost, setGhost] = useState<number[] | null>(null);
+
+    // Persistence State
+    const [isRecording, setIsRecording] = useState(false);
+    const [isHarvesting, setIsHarvesting] = useState(false);
 
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<number | undefined>(undefined);
@@ -60,6 +66,10 @@ export const useZenithConnection = () => {
                     setMetrics(data);
                     if (data.landmarks) setLandmarks(data.landmarks);
                     if (data.ghost) setGhost(data.ghost);
+
+                    // Sync Server State
+                    if (data.is_recording !== undefined) setIsRecording(data.is_recording);
+                    if (data.is_harvesting !== undefined) setIsHarvesting(data.is_harvesting);
                 }
             } catch (e) {
                 console.error("Parse Error", e);
@@ -90,5 +100,30 @@ export const useZenithConnection = () => {
         }
     }, []);
 
-    return { isConnected, isConnecting, metrics, advice, landmarks, ghost, sendFrame, requestAnalysis };
+    const toggleRecording = useCallback(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ action: "toggle_record" }));
+        }
+    }, []);
+
+    const toggleHarvesting = useCallback(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ action: "toggle_harvest" }));
+        }
+    }, []);
+
+    return {
+        isConnected,
+        isConnecting,
+        metrics,
+        advice,
+        landmarks,
+        ghost,
+        isRecording,
+        isHarvesting,
+        sendFrame,
+        requestAnalysis,
+        toggleRecording,
+        toggleHarvesting
+    };
 };
