@@ -39,7 +39,8 @@
 *   **[BETA] The Ghost (VAE Reconstruction):** Overlay of the "Idealized" VAE output on the user.
 *   **[COMPLETED] The Architect (Core Refactor):** Modularization of the main application logic.
 *   **[BETA] The Connection (Gemini API):** Real-time Vision-LLM integration for "The Sage".
-*   **[PLANNED] The Dream (Latent Interpolation):** Generative movement via random walks in VAE latent space.
+*   **[BETA] The Dream (Latent Interpolation):** Generative movement via random walks in VAE latent space.
+*   **[PLANNED] The Identity (Ghost Body):** Filled geometric visualization for the VAE Ghost.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 

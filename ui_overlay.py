@@ -19,6 +19,7 @@ class ZenithUI:
         self.C_NEON_RED = (0, 0, 255)
         self.C_NEON_ORANGE = (0, 165, 255)
         self.C_GHOST = (200, 200, 200) # Pale White for Ghost
+        self.C_GHOST_FILL = (100, 100, 100) # Darker fill
         
         # FONTS
         self.F_MAIN = cv2.FONT_HERSHEY_SIMPLEX
@@ -69,7 +70,6 @@ class ZenithUI:
         # Fill
         fill_w = int(bar_w * (score / 100.0))
         
-        # Color Logic: Red < 50 < Purple < 80 < Blue
         color = (255, 50, 50) # Blue
         if score < 50: color = (0, 0, 255) # Red
         elif score < 80: color = (255, 0, 255) # Purple
@@ -155,23 +155,48 @@ class ZenithUI:
         cv2.line(img, (0, int(2*h/3)), (w, int(2*h/3)), color, thickness)
 
     def draw_ghost(self, img, recon_flat):
-        """Draws the VAE 'Ghost' Reconstruction."""
+        """Draws the VAE 'Ghost' Reconstruction with Body Fill."""
         if recon_flat is None: return
         
         h, w, _ = img.shape
-        # Input flat: (1, 132) -> (33, 4) [x, y, z, vis]
         landmarks = recon_flat.reshape(33, 4)
-        
-        # Draw connections
-        # Note: landmarks are normalized (0-1)
         points = {}
         for idx, lm in enumerate(landmarks):
             px = int(lm[0] * w)
             py = int(lm[1] * h)
             points[idx] = (px, py)
+
+        # Transparent Overlay
+        overlay = img.copy()
+        
+        # TORSO [11, 12, 24, 23]
+        if all(k in points for k in [11, 12, 23, 24]):
+            pts = np.array([points[11], points[12], points[24], points[23]], np.int32)
+            cv2.fillConvexPoly(overlay, pts, self.C_GHOST_FILL)
             
-            # Draw faint joint
-            cv2.circle(img, (px, py), 2, self.C_GHOST, -1)
+        # ARMS
+        if all(k in points for k in [11, 13, 15]): # Left
+             pts = np.array([points[11], points[13], points[15]], np.int32) # Triangle approx
+             cv2.fillConvexPoly(overlay, pts, self.C_GHOST_FILL)
+        if all(k in points for k in [12, 14, 16]): # Right
+             pts = np.array([points[12], points[14], points[16]], np.int32)
+             cv2.fillConvexPoly(overlay, pts, self.C_GHOST_FILL)
+
+        # LEGS
+        if all(k in points for k in [23, 25, 27]): # Left
+             pts = np.array([points[23], points[25], points[27]], np.int32)
+             cv2.fillConvexPoly(overlay, pts, self.C_GHOST_FILL)
+        if all(k in points for k in [24, 26, 28]): # Right
+             pts = np.array([points[24], points[26], points[28]], np.int32)
+             cv2.fillConvexPoly(overlay, pts, self.C_GHOST_FILL)
+
+        # Alpha Blend
+        alpha = 0.3
+        cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0, img)
+
+        # Draw wireframe on top
+        for idx in points:
+            cv2.circle(img, points[idx], 2, self.C_GHOST, -1)
             
         for connection in self.POSE_CONNECTIONS:
             start_idx = connection[0]
