@@ -25,12 +25,14 @@ try:
     from ui_overlay import ZenithUI
     from session_manager import SessionManager
     from data_harvester import DataHarvester
+    from vision_client import VisionClient # NEW
 except ImportError:
     PoseHeuristics = None  
     PoseSequencer = None
     ZenithUI = None
     SessionManager = None
     DataHarvester = None
+    VisionClient = None
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 try:
@@ -68,10 +70,19 @@ if 'harvester' not in st.session_state:
     else: st.session_state['harvester'] = None
 harvester = st.session_state['harvester']
 
+if 'sage' not in st.session_state:
+    if VisionClient: st.session_state['sage'] = VisionClient()
+    else: st.session_state['sage'] = None
+sage = st.session_state['sage']
+
+# Global frame storage for snapshot
+if 'latest_frame' not in st.session_state:
+    st.session_state['latest_frame'] = None
+
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Ecosystem (Beta)")
-st.write("Dynamic Voice Active.")
+st.title("ZENith $ZEN^{ith}$ - The Sage (Beta)")
+st.write("On-Demand Vision Analyst Active.")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 metrics = session.get_current_summary()
@@ -96,6 +107,18 @@ st.sidebar.header("Status / Debug")
 if st.sidebar.button("End Session & Save"):
     session.save_session()
     st.sidebar.success("Saved to Vault.")
+
+# --- THE SAGE (Vision Analysis) ---
+st.sidebar.markdown("---")
+st.sidebar.header("The Sage")
+if st.sidebar.button("Analyze Latest Frame"):
+    if sage and st.session_state['latest_frame'] is not None:
+        with st.sidebar.spinner("The Sage is analyzing..."):
+            advice = sage.analyze_frame(st.session_state['latest_frame'])
+            st.sidebar.info(advice)
+    else:
+        st.sidebar.warning("No frame available yet.")
+
 
 # --- GALLERY LOGIC ---
 st.sidebar.markdown("---")
@@ -144,7 +167,6 @@ last_spoken_time = 0
 DEBOUNCE_SECONDS = 5.0 
 active_correction = None 
 
-# NEW: Dynamic Voice State
 last_flow_msg_time = 0
 FLOW_MSG_DEBOUNCE = 10.0
 
@@ -244,10 +266,16 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     global i, fps, t0, last_label, last_ok_ts, vae_future, last_q, last_spoken_time, active_correction
     global stability_start_time, is_locked, STABILITY_THRESHOLD
     global prev_landmarks_array, current_flow_score, prev_velocity, flow_history
-    global session, sequencer, ui, harvester
-    global last_flow_msg_time # NEW
+    global session, sequencer, ui, harvester, sage
+    global last_flow_msg_time 
     
     img = frame.to_ndarray(format="bgr24")
+    
+    # Capture for Sage
+    if use_tts: # Slight hack: update global frame frequently enough for snapshot
+        # We need to make a copy to avoid race conditions with Streamlit display?
+        # Actually session state is thread-safe-ish.
+        st.session_state['latest_frame'] = img.copy()
 
     t1 = time.time(); dt = t1 - t0; t0 = t1
     if dt > 0: fps = 0.9*fps + 0.1*(1.0/dt) if fps else (1.0/dt)
@@ -264,12 +292,11 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
              prev_velocity = velocity
         prev_landmarks_array = curr_flat
         
-        # --- DYNAMIC VOICE (Flow) ---
         if use_tts and (time.time() - last_flow_msg_time > FLOW_MSG_DEBOUNCE):
             if current_flow_score < 40:
                 tts_queue.put("Smooth it out. Find your center.")
                 last_flow_msg_time = time.time()
-            elif current_flow_score > 90 and velocity > 0.1: # moving well
+            elif current_flow_score > 90 and velocity > 0.1:
                 tts_queue.put("Excellent flow. Keep moving.")
                 last_flow_msg_time = time.time()
     
@@ -292,13 +319,11 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                 hist.append(label)
                 label = majority(hist)
 
-                # Sequencer
                 if use_seq and sequencer and label:
                     seq_status = sequencer.update(label, is_stable=False) 
                     if seq_status == "Advance":
                         if use_tts: tts_queue.put(f"Good. Next is {sequencer.get_next_goal()}.")
 
-                # Coaching
                 if PoseHeuristics and label:
                     lms = {lm_id: [lm.x, lm.y] for lm_id, lm in enumerate(res.pose_landmarks.landmark)}
                     correction = PoseHeuristics.evaluate(label, lms)
