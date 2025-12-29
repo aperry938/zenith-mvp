@@ -24,7 +24,7 @@ try:
     from pose_sequencer import PoseSequencer
     from ui_overlay import ZenithUI
     from session_manager import SessionManager
-    from data_harvester import DataHarvester # NEW
+    from data_harvester import DataHarvester
 except ImportError:
     PoseHeuristics = None  
     PoseSequencer = None
@@ -71,8 +71,8 @@ harvester = st.session_state['harvester']
 
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Ecosystem (Beta)")
-st.write("Data Harvesting Active: Building the 'Yoga-Diverse' Dataset.")
+st.title("ZENith $ZEN^{ith}$ - The Gallery (Beta)")
+st.write("Review your best moments.")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 metrics = session.get_current_summary()
@@ -90,13 +90,36 @@ use_ar   = st.sidebar.checkbox("Enable Visual Whispers (AR)", value=True)
 use_gamification = st.sidebar.checkbox("Enable Stability Engine", value=True)
 use_flow = st.sidebar.checkbox("Enable Flow Score", value=True)
 use_seq  = st.sidebar.checkbox("Enable Sequencer", value=True)
-use_data = st.sidebar.checkbox("Enable Data Harvest", value=True) # NEW
+use_data = st.sidebar.checkbox("Enable Data Harvest", value=True)
 show_dbg = st.sidebar.checkbox("Show debug logs", value=False)
 st.sidebar.header("Status / Debug")
 
 if st.sidebar.button("End Session & Save"):
     session.save_session()
     st.sidebar.success("Saved to Vault.")
+
+# --- GALLERY LOGIC ---
+st.sidebar.markdown("---")
+st.sidebar.header("Session Gallery")
+if st.sidebar.button("Refresh Gallery"):
+    # Scan dataset/ folder
+    images = []
+    dataset_root = "dataset"
+    if os.path.exists(dataset_root):
+        for pose_dir in os.listdir(dataset_root):
+            pd = os.path.join(dataset_root, pose_dir)
+            if os.path.isdir(pd):
+                for f in os.listdir(pd):
+                    if f.endswith(".jpg"):
+                         images.append(os.path.join(pd, f))
+    
+    # Sort by modify time (newest first)
+    images.sort(key=os.path.getmtime, reverse=True)
+    
+    # Show top 5
+    for img_path in images[:5]:
+        st.sidebar.image(img_path, caption=os.path.basename(img_path), use_column_width=True)
+
 
 CLF_PATH   = "zenith_pose_classifier.pkl"
 ENC_W_PATH = "zenith_encoder_weights.weights.h5"
@@ -301,7 +324,6 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                                 
                                 # --- HARVEST ---
                                 if use_data and harvester and label:
-                                    # Save frame if locked (stable) and high quality
                                     q_val = last_q if last_q is not None else 0
                                     harvester.save_frame(img, label, q_val)
                                     
@@ -352,7 +374,6 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
 
         ui.draw_hud(img, label, q_disp, fps)
         
-        # Draw Harvest Indicator
         if use_data and harvester:
             count = harvester.get_stats()
             cv2.putText(img, f"DATA: {count}", (10, img.shape[0]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
