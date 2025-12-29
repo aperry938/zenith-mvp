@@ -20,8 +20,10 @@ from tensorflow.keras import layers
 # --- INTERNAL IMPORTS ---
 try:
     from pose_foundations import PoseHeuristics
+    from pose_sequencer import PoseSequencer # NEW
 except ImportError:
-    PoseHeuristics = None  # Graceful fallback
+    PoseHeuristics = None  
+    PoseSequencer = None
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 try:
@@ -33,7 +35,7 @@ except Exception:
 tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.threading.set_inter_op_parallelism_threads(1)
 
-# ---------- SESSION RECORD (NEW) ----------
+# ---------- SESSION & SEQUENCER ----------
 class SessionRecorder:
     def __init__(self):
         self.start_time = time.time()
@@ -66,14 +68,22 @@ class SessionRecorder:
             "Top Pose": self.poses_detected.most_common(1)[0][0] if self.poses_detected else "None"
         }
 
-# Global Session
 if 'session' not in st.session_state:
     st.session_state['session'] = SessionRecorder()
 session = st.session_state['session']
 
+if 'sequencer' not in st.session_state:
+    if PoseSequencer:
+        st.session_state['sequencer'] = PoseSequencer()
+    else:
+        st.session_state['sequencer'] = None
+sequencer = st.session_state['sequencer']
+
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Record (Beta)")
+st.title("ZENith $ZEN^{ith}$ - The Sequencer (Beta)")
+st.write("Follow the flow. The app guides you to the next pose.")
+
 col1, col2, col3, col4 = st.columns(4)
 metrics = session.get_summary()
 col1.metric("Avg Flow", metrics["Avg Flow"])
@@ -86,6 +96,7 @@ use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
 use_ar   = st.sidebar.checkbox("Enable Visual Whispers (AR)", value=True)
 use_gamification = st.sidebar.checkbox("Enable Stability Engine", value=True)
 use_flow = st.sidebar.checkbox("Enable Flow Score", value=True)
+use_seq  = st.sidebar.checkbox("Enable Sequencer", value=True) # NEW
 show_dbg = st.sidebar.checkbox("Show debug logs", value=False)
 st.sidebar.header("Status / Debug")
 
@@ -267,7 +278,6 @@ def draw_stability_halo(img, landmarks, progress, is_locked):
     center_y = int(((min_y + max_y) / 2) * h)
     axis_x = int(((max_x - min_x) / 1.5) * w)
     axis_y = int(((max_y - min_y) / 1.5) * h)
-    
     if is_locked:
         color = (0, 215, 255)
         thickness = 5
@@ -279,13 +289,33 @@ def draw_stability_halo(img, landmarks, progress, is_locked):
         end_angle = int(360 * progress)
         cv2.ellipse(img, (center_x, center_y), (axis_x, axis_y), 0, 0, end_angle, color, thickness)
 
+def draw_sequencer(img, current, next_pose, progress):
+    """
+    Draws the Sequence HUD at Top Right.
+    """
+    h, w, _ = img.shape
+    w_box = 200
+    h_box = 80
+    x = w - w_box - 20
+    y = 20
+    
+    cv2.rectangle(img, (x, y), (x+w_box, y+h_box), (50, 50, 50), -1)
+    
+    # Progress Bar
+    bar_h = 10
+    fill_w = int(w_box * progress)
+    cv2.rectangle(img, (x, y), (x+fill_w, y+bar_h), (0, 255, 0), -1)
+    
+    cv2.putText(img, f"NOW: {current}", (x+10, y+35), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
+    cv2.putText(img, f"NEXT: {next_pose}", (x+10, y+65), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200,200,200), 1)
+
+
 # --- PROCESSING LOOP ---
 def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     global i, fps, t0, last_label, last_ok_ts, vae_future, last_q, last_spoken_time, active_correction
     global stability_start_time, is_locked, STABILITY_THRESHOLD
     global prev_landmarks_array, current_flow_score, prev_velocity, flow_history
-    # Session global
-    global session
+    global session, sequencer
     
     img = frame.to_ndarray(format="bgr24")
 
@@ -324,6 +354,17 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                 hist.append(label)
                 label = majority(hist)
 
+                # --- SEQUENCER UPDATE ---
+                if use_seq and sequencer and label:
+                    # Update sequencer with current label
+                    # Only override TTS if sequencer triggers an advance
+                    seq_status = sequencer.update(label, is_stable=False) # is_stable logic handled internally in sequencer for now
+                    
+                    if seq_status == "Advance":
+                        # Play Sound?
+                        if use_tts: tts_queue.put(f"Good. Next is {sequencer.get_next_goal()}.")
+
+                # --- COACHING LOGIC ---
                 if PoseHeuristics and label:
                     lms = {lm_id: [lm.x, lm.y] for lm_id, lm in enumerate(res.pose_landmarks.landmark)}
                     correction = PoseHeuristics.evaluate(label, lms)
@@ -352,7 +393,7 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                             duration = time.time() - stability_start_time
                             if duration > STABILITY_THRESHOLD and not is_locked:
                                 is_locked = True
-                                session.log_stability_event() # Log Lock event
+                                session.log_stability_event() 
                                 if use_tts: 
                                     reward_phrase = random.choice(LOCKED_PHRASES)
                                     tts_queue.put(reward_phrase)
@@ -393,6 +434,9 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
             
     if use_flow:
         draw_flow_bar(img, current_flow_score)
+        
+    if use_seq and sequencer:
+        draw_sequencer(img, sequencer.get_current_goal(), sequencer.get_next_goal(), sequencer.get_progress())
 
     draw_hud(img, label, q_disp, fps)
     return av.VideoFrame.from_ndarray(img, format="bgr24")
