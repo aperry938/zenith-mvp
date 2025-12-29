@@ -11,8 +11,8 @@ if 'core' not in st.session_state:
 core = st.session_state['core']
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Dream (Cycle 18)")
-st.write("Generative Latent Space Active.")
+st.title("ZENith $ZEN^{ith}$ - The Voice (Cycle 20)")
+st.write("Sage Voice Integration Active.")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 metrics = core.session.get_current_summary()
@@ -26,7 +26,7 @@ col5.metric("Total Practice", life_metrics["Total Time"])
 
 # CONTROLS
 st.sidebar.header("Generative Controls")
-use_dream = st.sidebar.checkbox("Enable Dream Mode", value=False) # NEW
+use_dream = st.sidebar.checkbox("Enable Dream Mode", value=False)
 
 st.sidebar.header("Standard Controls")
 use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
@@ -53,6 +53,9 @@ if st.sidebar.button("Analyze Latest Frame"):
         with st.sidebar.spinner("The Sage is analyzing..."):
             advice = core.sage.analyze_frame(core.latest_frame)
             st.sidebar.info(advice)
+            # VOICE INTEGRATION (Cycle 20)
+            if use_tts:
+                core.tts_queue.put(advice)
     else:
         st.sidebar.warning("No frame available yet.")
 
@@ -85,7 +88,7 @@ def process_callback(frame):
         'use_flow': use_flow,
         'use_seq': use_seq,
         'use_data': use_data,
-        'use_dream': use_dream # NEW
+        'use_dream': use_dream
     }
     return core.process_frame(frame, opts)
 
