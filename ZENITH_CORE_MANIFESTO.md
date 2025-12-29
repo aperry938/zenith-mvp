@@ -42,7 +42,8 @@
 *   **[BETA] The Dream (Latent Interpolation):** Generative movement via random walks in VAE latent space.
 *   **[BETA] The Identity (Ghost Body):** Filled geometric visualization for the VAE Ghost.
 *   **[BETA] The Voice of the Sage (TTS Integration):** Vocalization of Gemini-based coaching.
-*   **[PLANNED] The Mirror (Cinematic UI):** Cinematic color grading and adaptive overlays.
+*   **[BETA] The Mirror (Cinematic UI):** Cinematic color grading and adaptive overlays.
+*   **[PLANNED] The Signal (Async Brain):** Threaded AI processing for high-FPS UI.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
