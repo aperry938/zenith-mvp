@@ -18,9 +18,10 @@ from zenith_brain import ZenithBrain
 from vision_client import VisionClient
 from session_manager import SessionManager
 from data_harvester import DataHarvester
+from pose_sequencer import PoseSequencer
 
 # --- SERVER SETUP ---
-app = FastAPI(title="Zenith AI Gateway", version="Cycle 36 (Record)")
+app = FastAPI(title="Zenith AI Gateway", version="Cycle 38 (Teacher)")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,12 +36,13 @@ brain_instance = ZenithBrain()
 sage_instance = VisionClient()
 session_mgr = SessionManager()
 harvester = DataHarvester()
+sequencer = PoseSequencer()
 
 latest_frame_cache = None
 
 @app.get("/")
 async def root():
-    return {"status": "Zenith AI Gateway Online", "cycle": 36}
+    return {"status": "Zenith AI Gateway Online", "cycle": 38}
 
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
@@ -76,7 +78,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     
                     response = {}
                     if result:
-                        response["label"] = result.get("label")
+                        label = result.get("label")
+                        response["label"] = label
                         response["flow"] = result.get("flow_score")
                         response["velocity"] = result.get("velocity")
                         response["q"] = result.get("vae_q")
@@ -93,21 +96,42 @@ async def websocket_endpoint(websocket: WebSocket):
                         if result.get("vae_recon") is not None:
                             response["ghost"] = result["vae_recon"].flatten().tolist()
 
-                        # --- PERSISTENCE ---
-                        # 1. Session Recording
-                        if session_mgr.is_recording and result.get("label") and result.get("flow_score") is not None:
+                        # --- LOGIC UPDATES ---
+                        
+                        # 1. Sequencer Update
+                        # We need 'is_stable' logic, usually derived from velocity/flow
+                        is_stable = False
+                        if result.get("flow_score") is not None:
+                            # Heuristic: High flow score (>90) usually means stable/smooth
+                            # Or low velocity. Let's use velocity if available, else flow.
+                            # Brain output actually has velocity.
+                            vel = result.get("velocity", 1.0)
+                            if vel < 0.05: # Very low motion
+                                is_stable = True
+                                
+                        seq_status = sequencer.update(label, is_stable)
+                        
+                        response["sequence_state"] = {
+                            "target_pose": sequencer.get_current_goal(),
+                            "next_pose": sequencer.get_next_goal(),
+                            "status": seq_status, # "Holding", "Advance"
+                            "progress": sequencer.get_progress()
+                        }
+
+                        # 2. Session Recording
+                        if session_mgr.is_recording and label and result.get("flow_score") is not None:
                              session_mgr.add_frame_data(
                                  timestamp=ts,
-                                 pose_label=result["label"],
+                                 pose_label=label,
                                  flow_score=result["flow_score"],
                                  vae_q=result.get("vae_q", 0)
                              )
                         
-                        # 2. Data Harvesting
+                        # 3. Data Harvesting
                         if harvester.is_active and result.get("pose_landmarks"):
                              harvester.process_frame(frame, result["pose_landmarks"])
 
-                    # Send Status Flags back to Client so UI matches Server state
+                    # Send Status Flags back to Client
                     response["is_recording"] = session_mgr.is_recording
                     response["is_harvesting"] = harvester.is_active
 
@@ -119,6 +143,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     action = cmd.get("action")
                     
                     if action == "analyze":
+                        # ... (Same as before)
                         print("Analysis Requested...")
                         if latest_frame_cache is not None:
                             success, buffer = cv2.imencode('.jpg', latest_frame_cache)
@@ -133,20 +158,11 @@ async def websocket_endpoint(websocket: WebSocket):
                     elif action == "toggle_record":
                         if session_mgr.is_recording:
                             session_mgr.stop_recording()
-                            print("Recording Stopped")
                         else:
                             session_mgr.start_recording()
-                            print("Recording Started")
                             
                     elif action == "toggle_harvest":
-                        harvester.toggle() # DataHarvester has a toggle method? Let's check or just set bool.
-                        # Ideally DataHarvester has .active bool.
-                        # Looking at previous context, it seems standard to just toggle a flag.
-                        # But wait, looking at file content is safer.
-                        # Assuming it has a toggle or is_active property we can flip.
-                        # Let's rely on the method I recall or verify.
-                        # Actually I'll check DataHarvester code in next turn if needed, but 'toggle()' is common.
-                        # If not, I will fix it.
+                        harvester.toggle()
                         print(f"Harvesting Toggled to {harvester.is_active}")
 
                 except Exception as e:

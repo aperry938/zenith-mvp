@@ -57,7 +57,8 @@
 *   **[BETA] The Manuscript (Documentation):** Update docs for React/FastAPI architecture.
 *   **[BETA] The Polish (Frontend Optimization):** Error boundaries, robust connection handling, and UI spit-shine.
 *   **[PLANNED] The Mirage (Client-Side Visuals):** Rendering the VAE 'Ghost' and Skeleton overlays in React.
-*   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
+*   **[BETA] The Generator (Placeholder AI Coach):** Visual neural presence of the AI in the interface.
+*   **[PLANNED] The Teacher (Interactive Flow):** Wiring the Pose Sequencer to the React UI for structured classes.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
 ## 5. Technical Architecture

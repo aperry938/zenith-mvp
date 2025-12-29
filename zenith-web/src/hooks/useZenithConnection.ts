@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Landmark } from '../utils/drawing';
 
+interface SequenceState {
+    target_pose: string;
+    next_pose: string;
+    status: string;
+    progress: number;
+}
+
 interface ZenithMetrics {
     label: string;
     flow: number;
@@ -11,6 +18,7 @@ interface ZenithMetrics {
     ghost?: number[];
     is_recording?: boolean;
     is_harvesting?: boolean;
+    sequence_state?: SequenceState;
 }
 
 export const useZenithConnection = () => {
@@ -24,6 +32,9 @@ export const useZenithConnection = () => {
     // Persistence State
     const [isRecording, setIsRecording] = useState(false);
     const [isHarvesting, setIsHarvesting] = useState(false);
+
+    // Sequencer State
+    const [sequenceState, setSequenceState] = useState<SequenceState | null>(null);
 
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<number | undefined>(undefined);
@@ -70,6 +81,9 @@ export const useZenithConnection = () => {
                     // Sync Server State
                     if (data.is_recording !== undefined) setIsRecording(data.is_recording);
                     if (data.is_harvesting !== undefined) setIsHarvesting(data.is_harvesting);
+
+                    // Sequencer
+                    if (data.sequence_state) setSequenceState(data.sequence_state);
                 }
             } catch (e) {
                 console.error("Parse Error", e);
@@ -121,6 +135,7 @@ export const useZenithConnection = () => {
         ghost,
         isRecording,
         isHarvesting,
+        sequenceState,
         sendFrame,
         requestAnalysis,
         toggleRecording,
