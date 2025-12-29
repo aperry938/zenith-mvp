@@ -46,7 +46,8 @@
 *   **[BETA] The Signal (Async Brain):** Threaded AI processing for high-FPS UI.
 *   **[BETA] The Pulse (Smoother Flow):** Robust velocity smoothing for better 'Flow' metrics.
 *   **[BETA] The API Gateway (FastAPI Server):** WebSocket-based AI inference server.
-*   **[PLANNED] The Bridge (Client Test):** End-to-end verification of the fullstack loop.
+*   **[BETA] The Bridge (Client Test):** End-to-end verification of the fullstack loop.
+*   **[PLANNED] The Face (React Initialization):** Modern Vite/React frontend setup.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
