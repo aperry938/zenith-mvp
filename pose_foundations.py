@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 # --- GEOMETRY UTILS ---
 def calculate_angle(a, b, c):
@@ -13,23 +14,51 @@ def calculate_angle(a, b, c):
 
 def calculate_vector(start_point, direction_angle, magnitude=0.15):
     """
-    Calculates an end point for a vector starting at 'start_point' with a given angle.
-    Used for drawing correction arrows.
-    start_point: [x, y] normalized
-    direction_angle: radians (or we can just use relative offsets)
+    Calculates an end point for a vector.
     """
-    # Simple relative vector for now.
-    # We want to point "Outward" perpendicular to the leg, ideally.
-    # For now, let's just return fixed offsets based on heuristic.
     pass
 
-# --- HEURISTIC DEFINITIONS ---
+# --- COACHING LIBRARY ---
+# Tuples: (Short HUD Text, Long Spoken Text)
+COACHING_LIBRARY = {
+    "WARRIOR_DEEPEN": [
+        ("DEEPEN", "Deepen your lunge. Sink into it."),
+        ("BEND KNEE", "Bend your front knee to ninety degrees."),
+        ("LOWER HIPS", "Challenge yourself. Lower your hips."),
+        ("SINK", "Find your edge. Deepen the pose.")
+    ],
+    "WARRIOR_EASE": [
+        ("EASE UP", "Ease up slightly. Protect your knee."),
+        ("BACK OFF", "Listen to your body. Back off a bit."),
+        ("TOO DEEP", "You are too deep. Come up a little.")
+    ],
+    "ARM_EXTEND": [
+        ("EXTEND ARM", "Extend your back arm fully."),
+        ("REACH BACK", "Reach back with your left arm."),
+        ("OPEN CHEST", "Open your chest. Reach through your fingertips.")
+    ],
+    "SHOULDERS_LEVEL": [
+        ("LEVEL SHLDR", "Level your shoulders."),
+        ("RELAX SHLDR", "Relax your shoulders down nicely."),
+        ("DROP SHLDR", "Drop your shoulders away from your ears.")
+    ],
+    "HIPS_LOWER": [
+        ("LOWER HIPS", "Lower your hips to form a straight line."),
+        ("FLAT BACK", "Flatten your back. Engage core."),
+        ("CORE ENGAGE", "Squeeze your belly button to your spine.")
+    ]
+}
+
 class PoseHeuristics:
     @staticmethod
     def evaluate(pose_name, landmarks):
         """
         Input: landmarks (dict): {mp_pose.PoseLandmark: [x, y]}
-        Output: dict {'text': str, 'vector': tuple((x1,y1), (x2,y2)), 'color': tuple} OR None
+        Output: dict {
+            'text': (hud_str, spoken_str), 
+            'vector': tuple((x1,y1), (x2,y2)), 
+            'color': tuple
+        } OR None
         """
         if pose_name == "Warrior II":
             return PoseHeuristics.check_warrior_ii(landmarks)
@@ -40,13 +69,16 @@ class PoseHeuristics:
         return None
 
     @staticmethod
+    def get_advice(key, default_short, default_long):
+        """Helper to get random advice from library."""
+        if key in COACHING_LIBRARY:
+            return random.choice(COACHING_LIBRARY[key])
+        return (default_short, default_long)
+
+    @staticmethod
     def check_warrior_ii(landmarks):
-        # 23: LEFT_HIP, 25: LEFT_KNEE, 27: LEFT_ANKLE
         l_knee_ang = calculate_angle(landmarks[23], landmarks[25], landmarks[27])
-        # 24: RIGHT_HIP, 26: RIGHT_KNEE, 28: RIGHT_ANKLE
         r_knee_ang = calculate_angle(landmarks[24], landmarks[26], landmarks[28])
-        
-        # Determine bent knee
         front_knee_idx = 25 if l_knee_ang < 135 else 26
         angle = l_knee_ang if front_knee_idx == 25 else r_knee_ang
         knee_pt = landmarks[front_knee_idx]
@@ -54,29 +86,26 @@ class PoseHeuristics:
         correction = None
         
         if angle > 110:
+            advice = PoseHeuristics.get_advice("WARRIOR_DEEPEN", "DEEPEN", "Deepen your lunge.")
             correction = {
-                'text': "Deepen your lunge.",
-                'vector': (tuple(knee_pt), (knee_pt[0], knee_pt[1] + 0.15)), # Point Down
-                'color': (0, 255, 255) # Yellow/Cyan
+                'text': advice,
+                'vector': (tuple(knee_pt), (knee_pt[0], knee_pt[1] + 0.15)), 
+                'color': (0, 255, 255)
             }
         elif angle < 75:
+             advice = PoseHeuristics.get_advice("WARRIOR_EASE", "EASE UP", "Ease up.")
              correction = {
-                'text': "Ease up.",
-                'vector': (tuple(knee_pt), (knee_pt[0], knee_pt[1] - 0.1)), # Point Up
+                'text': advice,
+                'vector': (tuple(knee_pt), (knee_pt[0], knee_pt[1] - 0.1)),
                 'color': (0, 255, 255)
             }
         
-        # Knee Cave-in Heuristic (Valgus Collapse)
-        # If knee x is too far "in" relative to ankle x?
-        # Requires 3D really, but 2D heuristic: 
-        # If front leg is Right (26) and facing right...
-        # Let's simple check arms for now as secondary
-        
         l_arm_ang = calculate_angle(landmarks[11], landmarks[13], landmarks[15])
         if not correction and l_arm_ang < 150:
+             advice = PoseHeuristics.get_advice("ARM_EXTEND", "EXTEND", "Extend left arm.")
              correction = {
-                'text': "Extend left arm.",
-                'vector': (tuple(landmarks[13]), (landmarks[13][0]-0.1, landmarks[13][1])), # Point Left
+                'text': advice,
+                'vector': (tuple(landmarks[13]), (landmarks[13][0]-0.1, landmarks[13][1])),
                 'color': (0, 255, 255)
              }
 
@@ -87,12 +116,12 @@ class PoseHeuristics:
         l_shoulder = landmarks[11]
         r_shoulder = landmarks[12]
         if abs(l_shoulder[1] - r_shoulder[1]) > 0.05:
-            # Point to lower shoulder to move it up
             lower = 11 if l_shoulder[1] > r_shoulder[1] else 12
             pt = landmarks[lower]
+            advice = PoseHeuristics.get_advice("SHOULDERS_LEVEL", "LEVEL SHLDR", "Level shoulders.")
             return {
-                'text': "Level shoulders.",
-                'vector': (tuple(pt), (pt[0], pt[1] - 0.1)), # Up
+                'text': advice,
+                'vector': (tuple(pt), (pt[0], pt[1] - 0.1)),
                 'color': (0, 255, 255)
             }
         return None
@@ -103,11 +132,11 @@ class PoseHeuristics:
          r_hip_ang = calculate_angle(landmarks[12], landmarks[24], landmarks[28])
          avg = (l_hip_ang + r_hip_ang) / 2
          if avg < 160:
-             # Hips up
              pt = landmarks[23]
+             advice = PoseHeuristics.get_advice("HIPS_LOWER", "LOWER HIPS", "Lower hips.")
              return {
-                 'text': "Lower hips.",
-                 'vector': (tuple(pt), (pt[0], pt[1] + 0.1)), # Down
+                 'text': advice,
+                 'vector': (tuple(pt), (pt[0], pt[1] + 0.1)),
                  'color': (0, 255, 255)
              }
          return None
