@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useZenithVoice } from '../hooks/useZenithVoice';
 
 interface ZenithMetrics {
     label: string;
@@ -14,6 +15,15 @@ interface HUDProps {
 }
 
 export const HUD: React.FC<HUDProps> = ({ metrics, advice, onRequestAnalysis }) => {
+    const { speak } = useZenithVoice();
+
+    // Trigger speech when advice updates
+    useEffect(() => {
+        if (advice) {
+            speak(advice);
+        }
+    }, [advice, speak]);
+
     return (
         <>
             <div className="absolute top-5 right-5 w-52 flex flex-col gap-4 pointer-events-none">

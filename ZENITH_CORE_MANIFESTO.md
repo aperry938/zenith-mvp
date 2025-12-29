@@ -52,7 +52,8 @@
 *   **[BETA] The HUD (React UI Overlay):** Modularize UI components and enhance visuals.
 *   **[BETA] The Nervous System (State Management):** Robust state handling for connection/metrics.
 *   **[BETA] The Aesthetic (Tailwind Integration):** Migrate to Utility-First CSS for rapid styling.
-*   **[PLANNED] The Wisdom (Fullstack Sage):** Re-integrate Gemini Vision for real-time coaching.
+*   **[BETA] The Wisdom (Fullstack Sage):** Re-integrate Gemini Vision for real-time coaching.
+*   **[PLANNED] The Voice (React TTS):** Text-to-Speech via Web Speech API for Sage guidance.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
