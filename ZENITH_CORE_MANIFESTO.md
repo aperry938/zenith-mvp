@@ -27,7 +27,8 @@
 *   **[BETA] Stability Engine (Gamified Stillness):** Visual Halo + Audio "Lock-In" reward for holding perfect form.
 *   **[BETA] The Fluidity Metric (Flow Score):** Real-time measurement of movement smoothness (Inverse Jerk).
 *   **[BETA] The Persona (Dynamic Coaching):** Varied sentence structures and "empathic" feedback.
-*   **[PLANNED] The Record (Session Memory):** Analytics summary (Total Frames, Average Flow, Stability Count) after session.
+*   **[BETA] The Record (Session Memory):** Analytics summary (Total Frames, Average Flow, Stability Count) after session.
+*   **[PLANNED] The Sequencer (Automated Flow):** Logic to guide users through structured sequences (e.g., Sun Salutation A).
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Multimodal LLM to generate natural language coaching cues.
 *   **[PLANNED] "Yoga-Diverse" Dataset:** Proprietary dataset for debiasing pose estimation.
