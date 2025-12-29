@@ -50,7 +50,8 @@
 *   **[BETA] The Face (React Initialization):** Modern Vite/React frontend setup.
 *   **[BETA] The Retina (React Video Stream):** Bi-directional Webcam -> Server -> JSON stream.
 *   **[BETA] The HUD (React UI Overlay):** Modularize UI components and enhance visuals.
-*   **[PLANNED] The Nervous System (State Management):** Robust state handling for connection/metrics.
+*   **[BETA] The Nervous System (State Management):** Robust state handling for connection/metrics.
+*   **[PLANNED] The Aesthetic (Tailwind Integration):** Migrate to Utility-First CSS for rapid styling.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
