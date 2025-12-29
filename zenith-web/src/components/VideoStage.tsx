@@ -36,15 +36,20 @@ export const VideoStage: React.FC<VideoStageProps> = ({ onFrame }) => {
                     }, 'image/jpeg', 0.8);
                 }
             }
-        }, 33); // ~30 FPS
+        }, 33);
 
         return () => clearInterval(interval);
     }, [onFrame]);
 
     return (
         <>
-            <video ref={videoRef} style={{ display: 'none' }} playsInline muted />
-            <canvas ref={canvasRef} width={640} height={480} className="live-canvas" />
+            <video ref={videoRef} className="hidden" playsInline muted />
+            <canvas
+                ref={canvasRef}
+                width={640}
+                height={480}
+                className="w-[640px] h-[480px] border-4 border-zinc-800 rounded shadow-2xl scale-x-[-1]"
+            />
         </>
     );
 };
