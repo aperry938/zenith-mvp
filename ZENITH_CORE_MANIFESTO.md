@@ -36,7 +36,8 @@
 *   **[BETA] The Dynamic Voice (Contextual TTS):** Voice feedback reacting to speed/flow metrics.
 *   **[BETA] The Sage (Vision Analysis):** On-demand static frame analysis via Multimodal LLM (Plumbing).
 *   **[BETA] The Holo-Deck (Alignment Grid):** Visual grid overlay for spatial reference and self-correction.
-*   **[PLANNED] The Ghost (VAE Reconstruction):** Overlay of the "Idealized" VAE output on the user.
+*   **[BETA] The Ghost (VAE Reconstruction):** Overlay of the "Idealized" VAE output on the user.
+*   **[PLANNED] The Architect (Core Refactor):** Modularization of the main application logic.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
