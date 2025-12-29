@@ -32,6 +32,8 @@
 *   **[BETA] The Unification (UI System):** Centralized Design System class for all visual overlays (HUD, Halo, Flow Bar).
 *   **[BETA] The Vault (Persistence):** JSON-based session history and long-term analytics.
 *   **[BETA] "Yoga-Diverse" Dataset (Harvesting):** Automatic collection of high-quality frames for training.
+*   **[BETA] The Gallery (Session Review):** In-app review of harvested "Best Moments" (Images).
+*   **[PLANNED] The Dynamic Voice (Contextual TTS):** Voice feedback reacting to speed/flow metrics.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Multimodal LLM to generate natural language coaching cues.
 
