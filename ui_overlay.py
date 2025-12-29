@@ -154,7 +154,7 @@ class ZenithUI:
         cv2.line(img, (0, int(h/3)), (w, int(h/3)), color, thickness)
         cv2.line(img, (0, int(2*h/3)), (w, int(2*h/3)), color, thickness)
 
-    def draw_ghost(self, img, recon_flat):
+    def draw_ghost(self, img, recon_flat, alpha=0.3):
         """Draws the VAE 'Ghost' Reconstruction with Body Fill."""
         if recon_flat is None: return
         
@@ -190,8 +190,7 @@ class ZenithUI:
              pts = np.array([points[24], points[26], points[28]], np.int32)
              cv2.fillConvexPoly(overlay, pts, self.C_GHOST_FILL)
 
-        # Alpha Blend
-        alpha = 0.3
+        # Alpha Blend (Use Adaptive Alpha)
         cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0, img)
 
         # Draw wireframe on top

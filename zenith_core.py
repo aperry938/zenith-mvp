@@ -190,30 +190,43 @@ class ZenithCore:
         """Generates a hallucinated pose via interpolation."""
         if not self.vae_ok: return None
         
-        # Init start/target
         if self.dream_z_current is None:
             self.dream_z_current = np.random.normal(0, 1, (1, 16))
         if self.dream_z_target is None:
             self.dream_z_target = np.random.normal(0, 1, (1, 16))
             
-        # Interpolate
         z = (1 - self.dream_t) * self.dream_z_current + self.dream_t * self.dream_z_target
         
-        # Advance
         self.dream_t += self.DREAM_SPEED
         if self.dream_t >= 1.0:
             self.dream_t = 0.0
             self.dream_z_current = self.dream_z_target
             self.dream_z_target = np.random.normal(0, 1, (1, 16))
             
-        # Decode
         recon = self.decoder.predict(z, verbose=0)
         return recon
 
+    # --- CYCLE 21: THE MIRROR (Cinematic Grading) ---
+    def apply_cinematic_look(self, img):
+        """Applies a 'Neo-Noir' lookup table effect manually."""
+        # 1. Contrast Boost
+        img = cv2.convertScaleAbs(img, alpha=1.1, beta=0) 
+        # 2. Slight Saturation Boost (convert to HSV, bump S, back to BGR)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv)
+        s = cv2.multiply(s, 1.2) # Boost sat
+        s = np.clip(s, 0, 255).astype(hsv.dtype)
+        hsv = cv2.merge([h, s, v])
+        img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        return img
+
     def process_frame(self, frame_obj, options):
-        # options: {use_vae, use_ghost, use_tts, use_ar, use_grid, use_gamification, use_flow, use_seq, use_data, **use_dream**}
+        # options: {..., use_mirror (implicit or implicit via theme)}
         
         img = frame_obj.to_ndarray(format="bgr24")
+        
+        # APPLY MIRROR LOOK (Cycle 21)
+        img = self.apply_cinematic_look(img)
         
         if options.get('use_tts'):
             self.latest_frame = img.copy()
@@ -221,15 +234,12 @@ class ZenithCore:
         t1 = time.time(); dt = t1 - self.t0; self.t0 = t1
         if dt > 0: self.fps = 0.9*self.fps + 0.1*(1.0/dt) if self.fps else (1.0/dt)
 
-        # DREAM MODE BLOCKING
         if options.get('use_dream') and self.vae_ok:
-            # Overwrite processing with hallucination
             recon = self.process_dream()
             if recon is not None:
-                self.ui.draw_ghost(img, recon)
+                self.ui.draw_ghost(img, recon, alpha=0.8) # Strong ghost in Dream
                 cv2.putText(img, "DREAM MODE", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
             return av.VideoFrame.from_ndarray(img, format="bgr24")
-
 
         res = self.pose.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
@@ -337,8 +347,16 @@ class ZenithCore:
         if self.ui:
             if options.get('use_grid'): self.ui.draw_grid(img)
             
+            # SMART GHOST LOGIC (Cycle 21)
+            # If Q > 85 (Good form) -> Alpha 0.1 (Faint)
+            # If Q < 60 (Bad form) -> Alpha 0.5 (Strong)
+            ghost_alpha = 0.3 # Default
+            if q_disp is not None:
+                if q_disp > 85: ghost_alpha = 0.1
+                elif q_disp < 60: ghost_alpha = 0.5
+            
             if options.get('use_ghost') and self.last_recon is not None:
-                self.ui.draw_ghost(img, self.last_recon)
+                self.ui.draw_ghost(img, self.last_recon, alpha=ghost_alpha)
 
             if options.get('use_gamification') and self.stability_start_time is not None and res.pose_landmarks:
                 duration = time.time() - self.stability_start_time
