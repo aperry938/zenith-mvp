@@ -56,11 +56,11 @@
 *   **[BETA] The Voice (React TTS):** Text-to-Speech via Web Speech API for Sage guidance.
 *   **[BETA] The Manuscript (Documentation):** Update docs for React/FastAPI architecture.
 *   **[BETA] The Polish (Frontend Optimization):** Error boundaries, robust connection handling, and UI spit-shine.
-*   **[PLANNED] The Mirage (Client-Side Visuals):** Rendering the VAE 'Ghost' and Skeleton overlays in React.
+*   **[BETA] The Mirage (Client-Side Visuals):** Rendering the VAE 'Ghost' and Skeleton overlays in React.
 *   **[BETA] The Generator (Placeholder AI Coach):** Visual neural presence of the AI in the interface.
 *   **[BETA] The Teacher (Interactive Flow):** Wiring the Pose Sequencer to the React UI for structured classes.
-*   **[PLANNED] The Voice of Flow (Sequencer TTS):** Giving the sequencer a voice for audible guidance.
-*   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
+*   **[BETA] The Voice of Flow (Sequencer TTS):** Giving the sequencer a voice for audible guidance.
+*   **[PLANNED] The Oracle (Proactive Vision):** Automated, periodic Multimodal LLM feedback during poses.
 
 ## 5. Technical Architecture
 *   **Input:** Single-camera feed (Smartphone).

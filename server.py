@@ -21,7 +21,7 @@ from data_harvester import DataHarvester
 from pose_sequencer import PoseSequencer
 
 # --- SERVER SETUP ---
-app = FastAPI(title="Zenith AI Gateway", version="Cycle 39 (Voice of Flow)")
+app = FastAPI(title="Zenith AI Gateway", version="Cycle 40 (Oracle)")
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,7 +42,7 @@ latest_frame_cache = None
 
 @app.get("/")
 async def root():
-    return {"status": "Zenith AI Gateway Online", "cycle": 39}
+    return {"status": "Zenith AI Gateway Online", "cycle": 40}
 
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
@@ -122,12 +122,20 @@ async def websocket_endpoint(websocket: WebSocket):
                         if sequencer.has_announcement():
                             announcement = sequencer.get_announcement()
                             if announcement:
-                                # Send as separate message or embed? Embedded is simpler for sync
-                                # But separate prevents getting lost in rapid stream if client polls
-                                # Let's embed it in THIS frame response
                                 response["voice_message"] = announcement
 
-                        # 3. Session Recording
+                        # 3. Oracle Check (Proactive Analysis)
+                        if sequencer.check_oracle_trigger():
+                             print("Meaningful Moment Detected. Triggering Oracle...")
+                             # We use the cached frame to avoid race conditions with decoding
+                             if latest_frame_cache is not None:
+                                 # Fire and forget-ish (async task)
+                                 # We need to send the result back when it's done. 
+                                 # Since this is a loop, we can't await it here blocking the stream.
+                                 # We'll spawn a task to do it and send the ws message.
+                                 asyncio.create_task(run_oracle_analysis(websocket, latest_frame_cache))
+
+                        # 4. Session Recording
                         if session_mgr.is_recording and label and result.get("flow_score") is not None:
                              session_mgr.add_frame_data(
                                  timestamp=ts,
@@ -136,7 +144,7 @@ async def websocket_endpoint(websocket: WebSocket):
                                  vae_q=result.get("vae_q", 0)
                              )
                         
-                        # 4. Data Harvesting
+                        # 5. Data Harvesting
                         if harvester.is_active and result.get("pose_landmarks"):
                              harvester.process_frame(frame, result["pose_landmarks"])
 
@@ -152,17 +160,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     action = cmd.get("action")
                     
                     if action == "analyze":
-                        # ... (Same as before)
-                        print("Analysis Requested...")
+                        # Manual Trigger
+                        print("Analysis Requested (Manual)...")
                         if latest_frame_cache is not None:
-                            success, buffer = cv2.imencode('.jpg', latest_frame_cache)
-                            if success:
-                                loop = asyncio.get_event_loop()
-                                advice_text = await loop.run_in_executor(None, sage_instance.analyze_frame, latest_frame_cache)
-                                await websocket.send_text(json.dumps({
-                                    "type": "advice",
-                                    "text": advice_text
-                                }))
+                            asyncio.create_task(run_oracle_analysis(websocket, latest_frame_cache))
                                 
                     elif action == "toggle_record":
                         if session_mgr.is_recording:
@@ -183,6 +184,26 @@ async def websocket_endpoint(websocket: WebSocket):
              session_mgr.stop_recording()
     except Exception:
         pass 
+
+async def run_oracle_analysis(websocket: WebSocket, frame):
+    """
+    Runs the vision analysis in a separate thread/executor to avoid blocking the WS loop.
+    Sends the result directly to the socket.
+    """
+    try:
+        success, buffer = cv2.imencode('.jpg', frame)
+        if success:
+             loop = asyncio.get_running_loop()
+             # Note: analyze_frame might be blocking, so we run in executor
+             advice_text = await loop.run_in_executor(None, sage_instance.analyze_frame, frame)
+             
+             # Send as 'advice' type (which triggers TTS on client)
+             await websocket.send_text(json.dumps({
+                 "type": "advice",
+                 "text": f"Oracle Insight: {advice_text}" 
+             }))
+    except Exception as e:
+        print(f"Oracle Error: {e}")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
