@@ -30,10 +30,10 @@
 *   **[BETA] The Record (Session Memory):** Analytics summary (Total Frames, Average Flow, Stability Count) after session.
 *   **[BETA] The Sequencer (Automated Flow):** Logic to guide users through structured sequences (e.g., Sun Salutation A).
 *   **[BETA] The Unification (UI System):** Centralized Design System class for all visual overlays (HUD, Halo, Flow Bar).
-*   **[PLANNED] The Vault (Persistence):** JSON-based session history and long-term analytics.
+*   **[BETA] The Vault (Persistence):** JSON-based session history and long-term analytics.
+*   **[BETA] "Yoga-Diverse" Dataset (Harvesting):** Automatic collection of high-quality frames for training.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Multimodal LLM to generate natural language coaching cues.
-*   **[PLANNED] "Yoga-Diverse" Dataset:** Proprietary dataset for debiasing pose estimation.
 
 ## 5. Technical Architecture
 *   **Input:** Single-camera feed (Smartphone).
