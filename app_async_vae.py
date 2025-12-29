@@ -2,6 +2,7 @@ import os, time
 from collections import deque, Counter
 import concurrent.futures as cf
 import threading, queue
+import random # For Variation
 
 import streamlit as st
 st.set_page_config(layout="wide", page_title="ZENith - Live MVP")
@@ -33,13 +34,13 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.threading.set_inter_op_parallelism_threads(1)
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Fluidity Metric (Beta)")
-st.write("Move like water. Stability locks you in. Fluidity keeps you moving.")
+st.title("ZENith $ZEN^{ith}$ - The Persona (Beta)")
+st.write("A Dynamic AI Coach that learns, adapts, and speaks with variety.")
 use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
 use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
 use_ar   = st.sidebar.checkbox("Enable Visual Whispers (AR)", value=True)
 use_gamification = st.sidebar.checkbox("Enable Stability Engine", value=True)
-use_flow = st.sidebar.checkbox("Enable Flow Score", value=True) # NEW
+use_flow = st.sidebar.checkbox("Enable Flow Score", value=True)
 show_dbg = st.sidebar.checkbox("Show debug logs", value=False)
 st.sidebar.header("Status / Debug")
 
@@ -81,10 +82,12 @@ active_correction = None
 stability_start_time = None
 is_locked = False
 STABILITY_THRESHOLD = 3.0
+# Dynamic Rewards
+LOCKED_PHRASES = ["Locked.", "Solid.", "Perfect.", "Holding strong.", "That's it."]
 
-# Flow Metric State (NEW)
-prev_landmarks_array = None # Store flattened numpy array of previous frame
-flow_history = deque(maxlen=50) # Store last 50 flow scores for plotting
+# Flow Metric State
+prev_landmarks_array = None
+flow_history = deque(maxlen=50)
 current_flow_score = 100.0
 prev_velocity = 0.0
 
@@ -168,27 +171,11 @@ TTL = 1.5
 def majority(dq): return Counter(dq).most_common(1)[0][0] if dq else None
 
 def calculate_flow(curr_flat, prev_flat, dt, prev_v):
-    """
-    Calculates Flow Score based on Jerk (change in acceleration).
-    Higher Jerk = Lower Flow.
-    """
-    if prev_flat is None or dt <= 0:
-        return 100.0, 0.0
-    
-    # distance = Sum of L2 distances of all 33 keypoints (approx)
-    # curr_flat is (1, 132) -> 33 * 4 [x,y,z,v]
-    # We only care about x,y,z really.
+    if prev_flat is None or dt <= 0: return 100.0, 0.0
     diff = curr_flat - prev_flat
     dist = np.linalg.norm(diff)
-    
     velocity = dist / dt
-    acceleration = abs(velocity - prev_v) / dt # Pseudo-acceleration
-    
-    # Jerk is deriv of accel, but acceleration magnitude itself is a good proxy for "Suddenness" here.
-    # Let's use Acceleration as the punish factor for now, effectively.
-    # High Accel = Jerky stop/start.
-    
-    # Sensitivity
+    acceleration = abs(velocity - prev_v) / dt
     punishment = acceleration * 15.0 
     score = 100.0 - punishment
     return float(np.clip(score, 0, 100)), velocity
@@ -207,38 +194,29 @@ def draw_hud(img, label, q, fps):
     cv2.putText(img,f"{fps:.1f} FPS",(img.shape[1]-140,30),cv2.FONT_HERSHEY_SIMPLEX,0.7,(230,230,230),2,cv2.LINE_AA)
 
 def draw_flow_bar(img, score):
-    """
-    Draws a separate Flow Bar at the bottom of the screen.
-    Style: Neon Blue/Pink Wave.
-    """
     h, w, _ = img.shape
     bar_h = 20
     bar_w = int(w * 0.8)
     x = int(w * 0.1)
     y = h - 60
-    
-    # Background
     cv2.rectangle(img, (x, y), (x+bar_w, y+bar_h), (30,30,30), -1)
-    
-    # Fill
     fill_w = int(bar_w * (score / 100.0))
-    # Color logic: >80 Blue (Water), <50 Red (Jerk), Middle Purple
-    color = (255, 50, 50) # Blue-ish (BGR)
-    if score < 50: color = (0, 0, 255) # Red
-    elif score < 80: color = (255, 0, 255) # Purple
-    
+    color = (255, 50, 50) 
+    if score < 50: color = (0, 0, 255) 
+    elif score < 80: color = (255, 0, 255) 
     cv2.rectangle(img, (x, y), (x+fill_w, y+bar_h), color, -1)
-    
-    # Text
     cv2.putText(img, f"FLOW: {int(score)}", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2, cv2.LINE_AA)
 
 
-def draw_ar_arrow(img, start_norm, end_norm, color=(255, 255, 0), thickness=4):
+def draw_ar_arrow(img, start_norm, end_norm, color=(255, 255, 0), thickness=4, text=None):
     h, w, _ = img.shape
     start_px = (int(start_norm[0] * w), int(start_norm[1] * h))
     end_px   = (int(end_norm[0] * w), int(end_norm[1] * h))
     cv2.arrowedLine(img, start_px, end_px, color, thickness, tipLength=0.3)
     cv2.circle(img, end_px, 6, (255,255,255), -1)
+    # HUD text near arrow
+    if text:
+        cv2.putText(img, text, (end_px[0]+10, end_px[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
 
 def draw_stability_halo(img, landmarks, progress, is_locked):
     h, w, _ = img.shape
@@ -275,12 +253,11 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
 
     res = pose.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     
-    # --- FLOW METRIC CALCULATION (Every Frame) ---
+    # --- FLOW METRIC CALCULATION ---
     if use_flow and res.pose_landmarks:
         curr_flat = landmarks_to_flat(res.pose_landmarks)
         if prev_landmarks_array is not None:
              score, velocity = calculate_flow(curr_flat, prev_landmarks_array, dt, prev_velocity)
-             # Smooth it
              alpha_flow = 0.15
              current_flow_score = (alpha_flow * score) + ((1-alpha_flow) * current_flow_score)
              prev_velocity = velocity
@@ -296,7 +273,6 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     q_disp = last_q
 
     try:
-        # Prediction & Logic Loop (Every 3 frames)
         if res.pose_landmarks and (i % 3 == 0):
             feats = landmarks_to_flat(res.pose_landmarks)
 
@@ -314,10 +290,20 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                         active_correction = correction
                         stability_start_time = None
                         is_locked = False
+                        
+                        # PARSE SHORT VS LONG TEXT
+                        text_data = correction['text']
+                        hud_text = text_data
+                        spoken_text = text_data
+                        if isinstance(text_data, tuple):
+                            hud_text, spoken_text = text_data
+                            # Store it back so active_correction uses short text for visual
+                            active_correction['hud_text'] = hud_text
+
                         if use_tts:
                             now = time.time()
                             if (now - last_spoken_time) > DEBOUNCE_SECONDS:
-                                tts_queue.put(correction['text'])
+                                tts_queue.put(spoken_text)
                                 last_spoken_time = now
                     else:
                         active_correction = None
@@ -326,7 +312,9 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                             duration = time.time() - stability_start_time
                             if duration > STABILITY_THRESHOLD and not is_locked:
                                 is_locked = True
-                                if use_tts: tts_queue.put("Locked.")
+                                if use_tts: 
+                                    reward_phrase = random.choice(LOCKED_PHRASES)
+                                    tts_queue.put(reward_phrase)
 
             if use_vae and vae_ok:
                 if (i % 6 == 0) and (vae_future is None or vae_future.done()):
@@ -346,20 +334,20 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     if (time.time() - last_ok_ts) < TTL: label = label or last_label
 
     # --- RENDER VISUAL LAYERS ---
-    
-    # Layer 1: Stability (Behind)
     if use_gamification and stability_start_time is not None and res.pose_landmarks:
         duration = time.time() - stability_start_time
         progress = min(duration / STABILITY_THRESHOLD, 1.0)
         draw_stability_halo(img, res.pose_landmarks, progress, is_locked)
     
-    # Layer 2: Visual Whispers
     if use_ar and active_correction:
         if 'vector' in active_correction:
             start_pt, end_pt = active_correction['vector']
-            draw_ar_arrow(img, start_pt, end_pt, color=(255, 255, 0))
+            # Use HUD short text if available
+            ar_text = active_correction.get('hud_text', active_correction.get('text'))
+            if isinstance(ar_text, tuple): ar_text = ar_text[0] # Fallback
             
-    # Layer 3: Flow Metric (NEW)
+            draw_ar_arrow(img, start_pt, end_pt, color=(255, 255, 0), text=ar_text)
+            
     if use_flow:
         draw_flow_bar(img, current_flow_score)
 
