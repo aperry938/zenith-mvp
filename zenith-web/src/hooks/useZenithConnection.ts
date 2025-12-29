@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import type { Landmark } from '../utils/drawing';
 
 interface ZenithMetrics {
     label: string;
@@ -6,6 +7,8 @@ interface ZenithMetrics {
     velocity: number;
     q: number;
     advice?: string;
+    landmarks?: Landmark[];
+    ghost?: number[];
 }
 
 export const useZenithConnection = () => {
@@ -13,6 +16,8 @@ export const useZenithConnection = () => {
     const [isConnecting, setIsConnecting] = useState(false);
     const [metrics, setMetrics] = useState<ZenithMetrics | null>(null);
     const [advice, setAdvice] = useState<string | null>(null);
+    const [landmarks, setLandmarks] = useState<Landmark[] | null>(null);
+    const [ghost, setGhost] = useState<number[] | null>(null);
 
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<number | undefined>(undefined);
@@ -38,7 +43,6 @@ export const useZenithConnection = () => {
             console.log("Zenith: Disconnected");
             setIsConnected(false);
             setIsConnecting(true); // Technically waiting to connect
-            // Simple reconnect logic
             reconnectTimeoutRef.current = setTimeout(connect, 3000);
         };
 
@@ -54,6 +58,8 @@ export const useZenithConnection = () => {
                     setAdvice(data.text);
                 } else {
                     setMetrics(data);
+                    if (data.landmarks) setLandmarks(data.landmarks);
+                    if (data.ghost) setGhost(data.ghost);
                 }
             } catch (e) {
                 console.error("Parse Error", e);
@@ -84,5 +90,5 @@ export const useZenithConnection = () => {
         }
     }, []);
 
-    return { isConnected, isConnecting, metrics, advice, sendFrame, requestAnalysis };
+    return { isConnected, isConnecting, metrics, advice, landmarks, ghost, sendFrame, requestAnalysis };
 };
