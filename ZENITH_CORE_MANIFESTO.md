@@ -25,9 +25,10 @@
 *   **[BETA] Voice of Flow (TTS Feedback):** Heuristic Text-to-Speech engine (pyttsx3) for real-time form correction.
 *   **[BETA] Visual Whispers (AR Cues):** Augmented Reality vector overlays (OpenCV) for precise directional guidance.
 *   **[BETA] Stability Engine (Gamified Stillness):** Visual Halo + Audio "Lock-In" reward for holding perfect form.
+*   **[BETA] The Fluidity Metric (Flow Score):** Real-time measurement of movement smoothness (Inverse Jerk).
+*   **[PLANNED] The Persona (Dynamic Coaching):** Varied sentence structures and "empathic" feedback to reduce robotic repetition.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Multimodal LLM to generate natural language coaching cues.
-*   **[PLANNED] Fluidity Metric:** Jerk-based calculus to score vinyasa flow.
 *   **[PLANNED] "Yoga-Diverse" Dataset:** Proprietary dataset for debiasing pose estimation.
 
 ## 5. Technical Architecture
