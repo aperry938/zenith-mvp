@@ -1,6 +1,7 @@
 import os, time
 from collections import deque, Counter
 import concurrent.futures as cf
+import threading, queue
 
 import streamlit as st
 st.set_page_config(layout="wide", page_title="ZENith - Live MVP")
@@ -15,6 +16,12 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
+# --- INTERNAL IMPORTS ---
+try:
+    from pose_foundations import PoseHeuristics
+except ImportError:
+    PoseHeuristics = None  # Graceful fallback
+
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 try:
     # Avoid Metal/GPU stalls on some Macs
@@ -26,9 +33,10 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.threading.set_inter_op_parallelism_threads(1)
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - Live MVP Demo")
-st.write("Point your camera at yourself and perform one of the trained yoga poses.")
-use_vae  = st.sidebar.checkbox("Enable VAE quality (beta)", value=True)
+st.title("ZENith $ZEN^{ith}$ - Voice of Flow")
+st.write("Perform a yoga flow. The AI will speak corrections in real-time.")
+use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
+use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
 show_dbg = st.sidebar.checkbox("Show debug logs", value=False)
 st.sidebar.header("Status / Debug")
 
@@ -38,6 +46,37 @@ ENC_W_PATH = "zenith_encoder_weights.weights.h5"
 DEC_W_PATH = "zenith_decoder_weights.weights.h5"
 POSE_NAMES = ["Chair","Downward Dog","Extended Side Angle","High Lunge","Mountain Pose","Plank","Tree","Triangle","Warrior II"]
 INT_TO_POSE = {i:n for i,n in enumerate(POSE_NAMES)}
+
+# ---------- TTS ENGINE (Thread-Safe) ----------
+tts_queue = queue.Queue()
+
+def tts_worker():
+    """
+    Dedicated worker thread for text-to-speech.
+    Initializes the engine locally to avoid 'run loop' issues on main thread.
+    """
+    try:
+        import pyttsx3
+        engine = pyttsx3.init()
+        engine.setProperty('rate', 160) # Slightly faster coaching voice
+        while True:
+            text = tts_queue.get()
+            if text is None: break # Poison pill
+            try:
+                engine.say(text)
+                engine.runAndWait()
+            except Exception as e:
+                print(f"TTS Error: {e}")
+            tts_queue.task_done()
+    except ImportError:
+        print("pyttsx3 not installed. Voice disabled.")
+
+# Start TTS Thread
+threading.Thread(target=tts_worker, daemon=True).start()
+
+# Debounce State
+last_spoken_time = 0
+DEBOUNCE_SECONDS = 5.0 
 
 # ---------- Classifier ----------
 pose_classifier, clf_ok = None, False
@@ -121,6 +160,7 @@ TTL = 1.5
 def majority(dq): return Counter(dq).most_common(1)[0][0] if dq else None
 
 def draw_hud(img, label, q, fps):
+    # Minimalist HUD - Replacing emojis with text/shapes as per Audit
     cv2.rectangle(img,(20,20),(520,120),(65,109,255),-1)
     cv2.putText(img,f"POSE: {label or '—'}",(35,60),cv2.FONT_HERSHEY_SIMPLEX,0.95,(255,255,255),2,cv2.LINE_AA)
     cv2.putText(img,"QUALITY:",(35,97),cv2.FONT_HERSHEY_SIMPLEX,0.85,(255,255,255),2,cv2.LINE_AA)
@@ -133,7 +173,7 @@ def draw_hud(img, label, q, fps):
     cv2.putText(img,f"{fps:.1f} FPS",(img.shape[1]-140,30),cv2.FONT_HERSHEY_SIMPLEX,0.7,(230,230,230),2,cv2.LINE_AA)
 
 def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
-    global i, fps, t0, last_label, last_ok_ts, vae_future, last_q
+    global i, fps, t0, last_label, last_ok_ts, vae_future, last_q, last_spoken_time
     img = frame.to_ndarray(format="bgr24")
 
     # FPS
@@ -159,6 +199,18 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                 label = INT_TO_POSE.get(int(pred[0]), "Unknown")
                 hist.append(label)
                 label = majority(hist)
+
+                # --- VOICE COACH LOGIC ---
+                # Check for heuristic feedback
+                if use_tts and PoseHeuristics and label:
+                    now = time.time()
+                    if (now - last_spoken_time) > DEBOUNCE_SECONDS:
+                        # Extract basic dict for heuristics
+                        lms = {lm_id: [lm.x, lm.y] for lm_id, lm in enumerate(res.pose_landmarks.landmark)}
+                        feedback = PoseHeuristics.evaluate(label, lms)
+                        if feedback:
+                            tts_queue.put(feedback)
+                            last_spoken_time = now
 
             # Non-blocking VAE: submit work occasionally
             if use_vae and vae_ok:
