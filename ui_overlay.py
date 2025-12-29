@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import mediapipe as mp
 
 class ZenithUI:
     """
@@ -17,9 +18,13 @@ class ZenithUI:
         self.C_NEON_GREEN = (0, 255, 0)
         self.C_NEON_RED = (0, 0, 255)
         self.C_NEON_ORANGE = (0, 165, 255)
+        self.C_GHOST = (200, 200, 200) # Pale White for Ghost
         
         # FONTS
         self.F_MAIN = cv2.FONT_HERSHEY_SIMPLEX
+        
+        # POSE CONNECTIONS (Standard MediaPipe)
+        self.POSE_CONNECTIONS = mp.solutions.pose.POSE_CONNECTIONS
 
     def draw_hud(self, img, label, q, fps):
         """Draws the Main Status Box (Top Left)."""
@@ -144,10 +149,32 @@ class ZenithUI:
         color = (50, 50, 50)
         thickness = 1
         
-        # Verticals
         cv2.line(img, (int(w/3), 0), (int(w/3), h), color, thickness)
         cv2.line(img, (int(2*w/3), 0), (int(2*w/3), h), color, thickness)
-        
-        # Horizontals
         cv2.line(img, (0, int(h/3)), (w, int(h/3)), color, thickness)
         cv2.line(img, (0, int(2*h/3)), (w, int(2*h/3)), color, thickness)
+
+    def draw_ghost(self, img, recon_flat):
+        """Draws the VAE 'Ghost' Reconstruction."""
+        if recon_flat is None: return
+        
+        h, w, _ = img.shape
+        # Input flat: (1, 132) -> (33, 4) [x, y, z, vis]
+        landmarks = recon_flat.reshape(33, 4)
+        
+        # Draw connections
+        # Note: landmarks are normalized (0-1)
+        points = {}
+        for idx, lm in enumerate(landmarks):
+            px = int(lm[0] * w)
+            py = int(lm[1] * h)
+            points[idx] = (px, py)
+            
+            # Draw faint joint
+            cv2.circle(img, (px, py), 2, self.C_GHOST, -1)
+            
+        for connection in self.POSE_CONNECTIONS:
+            start_idx = connection[0]
+            end_idx = connection[1]
+            if start_idx in points and end_idx in points:
+                cv2.line(img, points[start_idx], points[end_idx], self.C_GHOST, 1)
