@@ -3,7 +3,7 @@ from collections import deque, Counter
 import concurrent.futures as cf
 import threading, queue
 import random
-import atexit # NEW
+import atexit
 
 import streamlit as st
 st.set_page_config(layout="wide", page_title="ZENith - Live MVP")
@@ -23,12 +23,14 @@ try:
     from pose_foundations import PoseHeuristics
     from pose_sequencer import PoseSequencer
     from ui_overlay import ZenithUI
-    from session_manager import SessionManager # NEW
+    from session_manager import SessionManager
+    from data_harvester import DataHarvester # NEW
 except ImportError:
     PoseHeuristics = None  
     PoseSequencer = None
     ZenithUI = None
     SessionManager = None
+    DataHarvester = None
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 try:
@@ -40,10 +42,9 @@ tf.config.threading.set_inter_op_parallelism_threads(1)
 
 # ---------- SESSION ----------
 if 'session' not in st.session_state:
-    if SessionManager:
-        st.session_state['session'] = SessionManager()
+    if SessionManager: st.session_state['session'] = SessionManager()
     else:
-        # Fallback dummy
+        # Dummy
         class DummySession:
             def update(self, *args): pass
             def log_stability_event(self): pass
@@ -51,7 +52,6 @@ if 'session' not in st.session_state:
             def get_lifetime_summary(self): return {"Total Time":"0h 0m", "Sessions":0}
             def save_session(self): pass
         st.session_state['session'] = DummySession()
-
 session = st.session_state['session']
 
 if 'sequencer' not in st.session_state:
@@ -64,9 +64,15 @@ if 'ui' not in st.session_state:
     else: st.session_state['ui'] = None
 ui = st.session_state['ui']
 
+if 'harvester' not in st.session_state:
+    if DataHarvester: st.session_state['harvester'] = DataHarvester()
+    else: st.session_state['harvester'] = None
+harvester = st.session_state['harvester']
+
+
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Vault (Beta)")
-st.write("Persistent Stats Active.")
+st.title("ZENith $ZEN^{ith}$ - The Ecosystem (Beta)")
+st.write("Data Harvesting Active: Building the 'Yoga-Diverse' Dataset.")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 metrics = session.get_current_summary()
@@ -76,7 +82,7 @@ col1.metric("Avg Flow", metrics["Avg Flow"])
 col2.metric("In The Zone", metrics["Zone Time"])
 col3.metric("Locks", metrics["Stability Events"])
 col4.metric("Top Pose", metrics["Top Pose"])
-col5.metric("Total Practice", life_metrics["Total Time"]) # NEW
+col5.metric("Total Practice", life_metrics["Total Time"])
 
 use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
 use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
@@ -84,10 +90,10 @@ use_ar   = st.sidebar.checkbox("Enable Visual Whispers (AR)", value=True)
 use_gamification = st.sidebar.checkbox("Enable Stability Engine", value=True)
 use_flow = st.sidebar.checkbox("Enable Flow Score", value=True)
 use_seq  = st.sidebar.checkbox("Enable Sequencer", value=True)
+use_data = st.sidebar.checkbox("Enable Data Harvest", value=True) # NEW
 show_dbg = st.sidebar.checkbox("Show debug logs", value=False)
 st.sidebar.header("Status / Debug")
 
-# Save button (Streamlit re-runs script often, but we need explicit save sometimes)
 if st.sidebar.button("End Session & Save"):
     session.save_session()
     st.sidebar.success("Saved to Vault.")
@@ -217,7 +223,7 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     global i, fps, t0, last_label, last_ok_ts, vae_future, last_q, last_spoken_time, active_correction
     global stability_start_time, is_locked, STABILITY_THRESHOLD
     global prev_landmarks_array, current_flow_score, prev_velocity, flow_history
-    global session, sequencer, ui
+    global session, sequencer, ui, harvester
     
     img = frame.to_ndarray(format="bgr24")
 
@@ -292,6 +298,13 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                             if duration > STABILITY_THRESHOLD and not is_locked:
                                 is_locked = True
                                 session.log_stability_event() 
+                                
+                                # --- HARVEST ---
+                                if use_data and harvester and label:
+                                    # Save frame if locked (stable) and high quality
+                                    q_val = last_q if last_q is not None else 0
+                                    harvester.save_frame(img, label, q_val)
+                                    
                                 if use_tts: 
                                     reward_phrase = random.choice(LOCKED_PHRASES)
                                     tts_queue.put(reward_phrase)
@@ -338,6 +351,11 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
             ui.draw_sequencer(img, sequencer.get_current_goal(), sequencer.get_next_goal(), sequencer.get_progress())
 
         ui.draw_hud(img, label, q_disp, fps)
+        
+        # Draw Harvest Indicator
+        if use_data and harvester:
+            count = harvester.get_stats()
+            cv2.putText(img, f"DATA: {count}", (10, img.shape[0]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
     return av.VideoFrame.from_ndarray(img, format="bgr24")
 
