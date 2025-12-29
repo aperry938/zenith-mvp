@@ -11,8 +11,8 @@ if 'core' not in st.session_state:
 core = st.session_state['core']
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Architect (Cycle 16)")
-st.write("Core Refactor Active.")
+st.title("ZENith $ZEN^{ith}$ - The Dream (Cycle 18)")
+st.write("Generative Latent Space Active.")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 metrics = core.session.get_current_summary()
@@ -25,6 +25,10 @@ col4.metric("Top Pose", metrics["Top Pose"])
 col5.metric("Total Practice", life_metrics["Total Time"])
 
 # CONTROLS
+st.sidebar.header("Generative Controls")
+use_dream = st.sidebar.checkbox("Enable Dream Mode", value=False) # NEW
+
+st.sidebar.header("Standard Controls")
 use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
 use_ghost = st.sidebar.checkbox("Enable The Ghost (VAE Overlay)", value=True)
 use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
@@ -80,7 +84,8 @@ def process_callback(frame):
         'use_gamification': use_gamification,
         'use_flow': use_flow,
         'use_seq': use_seq,
-        'use_data': use_data
+        'use_data': use_data,
+        'use_dream': use_dream # NEW
     }
     return core.process_frame(frame, opts)
 

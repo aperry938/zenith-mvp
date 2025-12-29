@@ -23,10 +23,8 @@ try:
     from data_harvester import DataHarvester
     from vision_client import VisionClient
 except ImportError:
-    # Fail gracefully or log
     print("Warning: Internal modules not found.")
 
-# --- TF CONFIG ---
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 try:
     tf.config.set_visible_devices([], 'GPU')
@@ -72,10 +70,13 @@ class ZenithCore:
         self.load_vae()
         self.init_mediapipe()
         
-        # --- MODULES ---
-        # Instead of storing in session_state (which is UI layer), Core holds instances
-        # But for persistence across re-runs, we might need to pass them in or re-init.
-        # For this refactor, let's assume Core *owns* the logic objects.
+        # dream state
+        self.dream_z_current = None
+        self.dream_z_target = None
+        self.dream_t = 0.0
+        self.DREAM_SPEED = 0.02
+        
+        # modules
         self.ui = ZenithUI()
         self.session = SessionManager()
         self.sequencer = PoseSequencer()
@@ -102,7 +103,7 @@ class ZenithCore:
                         print(f"TTS Error: {e}")
                     self.tts_queue.task_done()
             except ImportError:
-                print("pyttsx3 not installed.")
+                 pass
         threading.Thread(target=tts_worker, daemon=True).start()
 
     def load_classifier(self):
@@ -157,9 +158,6 @@ class ZenithCore:
         return enc, dec
 
     def vae_quality(self, flat_keypoints):
-        # Must run in main thread or handle TF correctly. 
-        # Actually TF is thread-safe mostly but let's be careful.
-        # We are using ThreadPoolExecutor for this.
         z_mean, _, z = self.encoder.predict(flat_keypoints, verbose=0)
         recon = self.decoder.predict(z, verbose=0)
         mse = float(np.mean((flat_keypoints - recon) ** 2))
@@ -188,16 +186,50 @@ class ZenithCore:
         score = 100.0 - punishment
         return float(np.clip(score, 0, 100)), velocity
 
+    def process_dream(self):
+        """Generates a hallucinated pose via interpolation."""
+        if not self.vae_ok: return None
+        
+        # Init start/target
+        if self.dream_z_current is None:
+            self.dream_z_current = np.random.normal(0, 1, (1, 16))
+        if self.dream_z_target is None:
+            self.dream_z_target = np.random.normal(0, 1, (1, 16))
+            
+        # Interpolate
+        z = (1 - self.dream_t) * self.dream_z_current + self.dream_t * self.dream_z_target
+        
+        # Advance
+        self.dream_t += self.DREAM_SPEED
+        if self.dream_t >= 1.0:
+            self.dream_t = 0.0
+            self.dream_z_current = self.dream_z_target
+            self.dream_z_target = np.random.normal(0, 1, (1, 16))
+            
+        # Decode
+        recon = self.decoder.predict(z, verbose=0)
+        return recon
+
     def process_frame(self, frame_obj, options):
-        # options: {use_vae, use_ghost, use_tts, use_ar, use_grid, use_gamification, use_flow, use_seq, use_data}
+        # options: {use_vae, use_ghost, use_tts, use_ar, use_grid, use_gamification, use_flow, use_seq, use_data, **use_dream**}
         
         img = frame_obj.to_ndarray(format="bgr24")
         
         if options.get('use_tts'):
-            self.latest_frame = img.copy() # For Sage/Snapshot
+            self.latest_frame = img.copy()
 
         t1 = time.time(); dt = t1 - self.t0; self.t0 = t1
         if dt > 0: self.fps = 0.9*self.fps + 0.1*(1.0/dt) if self.fps else (1.0/dt)
+
+        # DREAM MODE BLOCKING
+        if options.get('use_dream') and self.vae_ok:
+            # Overwrite processing with hallucination
+            recon = self.process_dream()
+            if recon is not None:
+                self.ui.draw_ghost(img, recon)
+                cv2.putText(img, "DREAM MODE", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+            return av.VideoFrame.from_ndarray(img, format="bgr24")
+
 
         res = self.pose.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
@@ -333,4 +365,3 @@ class ZenithCore:
                  cv2.putText(img, f"DATA: {count}", (10, img.shape[0]-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
         return av.VideoFrame.from_ndarray(img, format="bgr24")
-
