@@ -33,10 +33,11 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.threading.set_inter_op_parallelism_threads(1)
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - Voice of Flow")
-st.write("Perform a yoga flow. The AI will speak corrections in real-time.")
+st.title("ZENith $ZEN^{ith}$ - Visual Whispers (AR Beta)")
+st.write("Perform a yoga flow. The AI will provide audio AND visual corrections.")
 use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
 use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
+use_ar   = st.sidebar.checkbox("Enable Visual Whispers (AR)", value=True)
 show_dbg = st.sidebar.checkbox("Show debug logs", value=False)
 st.sidebar.header("Status / Debug")
 
@@ -77,6 +78,7 @@ threading.Thread(target=tts_worker, daemon=True).start()
 # Debounce State
 last_spoken_time = 0
 DEBOUNCE_SECONDS = 5.0 
+active_correction = None # Store current correction for drawing
 
 # ---------- Classifier ----------
 pose_classifier, clf_ok = None, False
@@ -172,8 +174,22 @@ def draw_hud(img, label, q, fps):
     cv2.putText(img,f"{qv:3d}",(bar_x+bar_w+12,bar_y+16),cv2.FONT_HERSHEY_SIMPLEX,0.7,(255,255,255),2,cv2.LINE_AA)
     cv2.putText(img,f"{fps:.1f} FPS",(img.shape[1]-140,30),cv2.FONT_HERSHEY_SIMPLEX,0.7,(230,230,230),2,cv2.LINE_AA)
 
+def draw_ar_arrow(img, start_norm, end_norm, color=(255, 255, 0), thickness=4):
+    """
+    Draws a correction arrow on the image.
+    Inputs are normalized coordinates (0.0 - 1.0).
+    Color should be BGR.
+    """
+    h, w, _ = img.shape
+    start_px = (int(start_norm[0] * w), int(start_norm[1] * h))
+    end_px   = (int(end_norm[0] * w), int(end_norm[1] * h))
+    
+    cv2.arrowedLine(img, start_px, end_px, color, thickness, tipLength=0.3)
+    # Draw a Glow bloom? (Simple circle at tip)
+    cv2.circle(img, end_px, 6, (255,255,255), -1)
+
 def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
-    global i, fps, t0, last_label, last_ok_ts, vae_future, last_q, last_spoken_time
+    global i, fps, t0, last_label, last_ok_ts, vae_future, last_q, last_spoken_time, active_correction
     img = frame.to_ndarray(format="bgr24")
 
     # FPS
@@ -191,6 +207,7 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     q_disp = last_q
 
     try:
+        # Prediction & Logic Loop (Every 3 frames)
         if res.pose_landmarks and (i % 3 == 0):
             feats = landmarks_to_flat(res.pose_landmarks)
 
@@ -200,23 +217,28 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                 hist.append(label)
                 label = majority(hist)
 
-                # --- VOICE COACH LOGIC ---
-                # Check for heuristic feedback
-                if use_tts and PoseHeuristics and label:
-                    now = time.time()
-                    if (now - last_spoken_time) > DEBOUNCE_SECONDS:
-                        # Extract basic dict for heuristics
-                        lms = {lm_id: [lm.x, lm.y] for lm_id, lm in enumerate(res.pose_landmarks.landmark)}
-                        feedback = PoseHeuristics.evaluate(label, lms)
-                        if feedback:
-                            tts_queue.put(feedback)
-                            last_spoken_time = now
+                # --- COACHING LOGIC ---
+                if PoseHeuristics and label:
+                    lms = {lm_id: [lm.x, lm.y] for lm_id, lm in enumerate(res.pose_landmarks.landmark)}
+                    correction = PoseHeuristics.evaluate(label, lms)
+                    
+                    if correction:
+                        # AUDIO
+                        if use_tts:
+                            now = time.time()
+                            if (now - last_spoken_time) > DEBOUNCE_SECONDS:
+                                tts_queue.put(correction['text'])
+                                last_spoken_time = now
+                        
+                        # VISUAL (Store for drawing every frame)
+                        active_correction = correction
+                    else:
+                        active_correction = None
 
-            # Non-blocking VAE: submit work occasionally
+            # Non-blocking VAE
             if use_vae and vae_ok:
                 if (i % 6 == 0) and (vae_future is None or vae_future.done()):
                     vae_future = vae_pool.submit(vae_quality, feats.copy())
-                # Collect result if ready (do not wait)
                 if vae_future is not None and vae_future.done():
                     q = vae_future.result()
                     last_q = q if last_q is None else (alpha*q + (1-alpha)*last_q)
@@ -233,6 +255,19 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     # Keep HUD stable briefly if nothing new
     if (time.time() - last_ok_ts) < TTL:
         label = label or last_label
+
+    # --- RENDER VISUAL WHISPERS ---
+    if use_ar and active_correction:
+        # Ensure correction has a vector
+        if 'vector' in active_correction:
+            start_pt, end_pt = active_correction['vector']
+            # Color is RGB in dict (usually), convert to BGR for OpenCV
+            # Our Foundations file returns (0, 255, 255) which is Yellow/Cyan.
+            # Let's assume the Foundations file returns BGR or we fix it here.
+            # Foundations returns (0, 255, 255) -> Yellow in RGB. BGR would be (255, 255, 0)
+            col = active_correction.get('color', (0, 255, 255))
+            # Fix if needed. Let's just use Cyan (255, 255, 0 in BGR)
+            draw_ar_arrow(img, start_pt, end_pt, color=(255, 255, 0))
 
     draw_hud(img, label, q_disp, fps)
     return av.VideoFrame.from_ndarray(img, format="bgr24")
