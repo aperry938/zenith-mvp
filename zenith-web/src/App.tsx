@@ -1,17 +1,18 @@
 import { VideoStage } from './components/VideoStage';
 import { HUD } from './components/HUD';
+import { GhostOverlay } from './components/GhostOverlay';
 import { useZenithConnection } from './hooks/useZenithConnection';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function ZenithApp() {
-  const { isConnected, isConnecting, metrics, advice, sendFrame, requestAnalysis } = useZenithConnection();
+  const { isConnected, isConnecting, metrics, advice, landmarks, ghost, sendFrame, requestAnalysis } = useZenithConnection();
 
   return (
     <div className="w-screen h-screen flex flex-col bg-zenith-bg text-gray-100 overflow-hidden">
       {/* Header */}
-      <header className="h-16 border-b border-zinc-800 flex justify-between items-center px-8 bg-zenith-panel">
+      <header className="h-16 border-b border-zinc-800 flex justify-between items-center px-8 bg-zenith-panel z-10 relative">
         <div className="font-bold text-2xl tracking-widest text-white uppercase">
-          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v1.6 (Polished)</span>
+          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v1.7 (Mirage)</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -32,13 +33,19 @@ function ZenithApp() {
 
       {/* Main Stage */}
       <main className="flex-1 flex justify-center items-center relative bg-[radial-gradient(circle_at_center,#111_0%,#000_100%)]">
+        {/* Layer 0: Video */}
         <VideoStage onFrame={sendFrame} />
+
+        {/* Layer 1: The Mirage (Ghost/Skeleton) */}
+        <GhostOverlay landmarks={landmarks} ghostFlat={ghost} />
+
+        {/* Layer 2: UI Overlay */}
         <HUD metrics={metrics} advice={advice} onRequestAnalysis={requestAnalysis} />
       </main>
 
       {/* Footer */}
-      <footer className="h-10 border-t border-zinc-800 flex justify-center items-center text-xs text-zinc-600 bg-zenith-panel">
-        <p>Cycle 34: The Polish</p>
+      <footer className="h-10 border-t border-zinc-800 flex justify-center items-center text-xs text-zinc-600 bg-zenith-panel z-10 relative">
+        <p>Cycle 35: The Mirage</p>
       </footer>
     </div>
   );

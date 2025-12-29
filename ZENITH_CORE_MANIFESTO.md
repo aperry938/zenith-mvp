@@ -55,7 +55,8 @@
 *   **[BETA] The Wisdom (Fullstack Sage):** Re-integrate Gemini Vision for real-time coaching.
 *   **[BETA] The Voice (React TTS):** Text-to-Speech via Web Speech API for Sage guidance.
 *   **[BETA] The Manuscript (Documentation):** Update docs for React/FastAPI architecture.
-*   **[PLANNED] The Polish (Frontend Optimization):** Error boundaries, robust connection handling, and UI spit-shine.
+*   **[BETA] The Polish (Frontend Optimization):** Error boundaries, robust connection handling, and UI spit-shine.
+*   **[PLANNED] The Mirage (Client-Side Visuals):** Rendering the VAE 'Ghost' and Skeleton overlays in React.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
