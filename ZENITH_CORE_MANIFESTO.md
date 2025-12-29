@@ -45,7 +45,8 @@
 *   **[BETA] The Mirror (Cinematic UI):** Cinematic color grading and adaptive overlays.
 *   **[BETA] The Signal (Async Brain):** Threaded AI processing for high-FPS UI.
 *   **[BETA] The Pulse (Smoother Flow):** Robust velocity smoothing for better 'Flow' metrics.
-*   **[PLANNED] The API Gateway (FastAPI Server):** WebSocket-based AI inference server.
+*   **[BETA] The API Gateway (FastAPI Server):** WebSocket-based AI inference server.
+*   **[PLANNED] The Bridge (Client Test):** End-to-end verification of the fullstack loop.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
