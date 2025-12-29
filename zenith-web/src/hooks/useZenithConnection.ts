@@ -8,6 +8,14 @@ interface SequenceState {
     progress: number;
 }
 
+interface SessionStats {
+    Duration: string;
+    "Avg Flow": string;
+    "Stability Events": number;
+    "Zone Time": string;
+    "Top Pose": string;
+}
+
 interface ZenithMetrics {
     label: string;
     flow: number;
@@ -37,8 +45,11 @@ export const useZenithConnection = () => {
     // Sequencer State
     const [sequenceState, setSequenceState] = useState<SequenceState | null>(null);
 
-    // Voice Queue (Simple string for now)
+    // Voice Queue
     const [voiceMessage, setVoiceMessage] = useState<string | null>(null);
+
+    // Session Report
+    const [sessionReport, setSessionReport] = useState<SessionStats | null>(null);
 
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<number | undefined>(undefined);
@@ -63,6 +74,8 @@ export const useZenithConnection = () => {
         wsRef.current.onclose = () => {
             console.log("Zenith: Disconnected");
             setIsConnected(false);
+            // Only reconnect if not intentionally closed? 
+            // Actually we want persistent connection unless user leaves page.
         };
 
         wsRef.current.onerror = (err) => {
@@ -73,8 +86,12 @@ export const useZenithConnection = () => {
         wsRef.current.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
+
                 if (data.type === 'advice') {
                     setAdvice(data.text);
+                } else if (data.type === 'session_report') {
+                    // Received End of Session Report
+                    setSessionReport(data.stats);
                 } else {
                     setMetrics(data);
                     if (data.landmarks) setLandmarks(data.landmarks);
@@ -133,9 +150,18 @@ export const useZenithConnection = () => {
         }
     }, []);
 
-    // Clear voice message after consumption
+    const endSession = useCallback(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ action: "end_session" }));
+        }
+    }, []);
+
     const clearVoiceMessage = useCallback(() => {
         setVoiceMessage(null);
+    }, []);
+
+    const clearSessionReport = useCallback(() => {
+        setSessionReport(null);
     }, []);
 
     return {
@@ -149,10 +175,13 @@ export const useZenithConnection = () => {
         isHarvesting,
         sequenceState,
         voiceMessage,
+        sessionReport,
         clearVoiceMessage,
+        clearSessionReport,
         sendFrame,
         requestAnalysis,
         toggleRecording,
-        toggleHarvesting
+        toggleHarvesting,
+        endSession
     };
 };

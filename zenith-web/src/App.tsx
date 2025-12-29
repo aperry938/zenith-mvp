@@ -5,6 +5,7 @@ import { GhostOverlay } from './components/GhostOverlay';
 import { SessionControls } from './components/SessionControls';
 import { GenerativeCoach } from './components/GenerativeCoach';
 import { SequenceDisplay } from './components/SequenceDisplay';
+import { SessionReport } from './components/SessionReport';
 import { useZenithConnection } from './hooks/useZenithConnection';
 import { useZenithVoice } from './hooks/useZenithVoice';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -21,11 +22,14 @@ function ZenithApp() {
     isHarvesting,
     sequenceState,
     voiceMessage,
+    sessionReport,
     clearVoiceMessage,
+    clearSessionReport,
     sendFrame,
     requestAnalysis,
     toggleRecording,
-    toggleHarvesting
+    toggleHarvesting,
+    endSession
   } = useZenithConnection();
 
   // TTS Engine
@@ -44,7 +48,7 @@ function ZenithApp() {
       {/* Header */}
       <header className="h-16 border-b border-zinc-800 flex justify-between items-center px-8 bg-zenith-panel z-10 relative">
         <div className="font-bold text-2xl tracking-widest text-white uppercase">
-          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.1 (Voice)</span>
+          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.2 (Reflection)</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -55,8 +59,8 @@ function ZenithApp() {
             </span>
           )}
           <div className={`px-3 py-1 rounded text-xs font-bold tracking-wider transition-colors duration-500 ${isConnected
-            ? 'bg-zenith-neonGreen text-black shadow-[0_0_10px_rgba(0,255,153,0.3)]'
-            : 'bg-zinc-800 text-zinc-500'
+              ? 'bg-zenith-neonGreen text-black shadow-[0_0_10px_rgba(0,255,153,0.3)]'
+              : 'bg-zinc-800 text-zinc-500'
             }`}>
             {isConnected ? 'LIVE' : isConnecting ? 'CONNECTING...' : 'OFFLINE'}
           </div>
@@ -82,15 +86,19 @@ function ZenithApp() {
           isHarvesting={isHarvesting}
           onToggleRecord={toggleRecording}
           onToggleHarvest={toggleHarvesting}
+          onEndSession={endSession}
         />
 
         {/* Layer 4: The Generator (AI Coach Avatar) */}
         <GenerativeCoach />
+
+        {/* Layer 5: The Reflection (Report Overlay) */}
+        <SessionReport stats={sessionReport} onClose={clearSessionReport} />
       </main>
 
       {/* Footer */}
       <footer className="h-10 border-t border-zinc-800 flex justify-center items-center text-xs text-zinc-600 bg-zenith-panel z-10 relative">
-        <p>Cycle 39: The Voice of Flow</p>
+        <p>Cycle 41: The Reflection</p>
       </footer>
     </div>
   );
