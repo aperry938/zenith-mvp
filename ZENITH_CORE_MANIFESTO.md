@@ -37,7 +37,8 @@
 *   **[BETA] The Sage (Vision Analysis):** On-demand static frame analysis via Multimodal LLM (Plumbing).
 *   **[BETA] The Holo-Deck (Alignment Grid):** Visual grid overlay for spatial reference and self-correction.
 *   **[BETA] The Ghost (VAE Reconstruction):** Overlay of the "Idealized" VAE output on the user.
-*   **[PLANNED] The Architect (Core Refactor):** Modularization of the main application logic.
+*   **[COMPLETED] The Architect (Core Refactor):** Modularization of the main application logic.
+*   **[PLANNED] The Connection (Gemini API):** Real-time Vision-LLM integration for "The Sage".
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
