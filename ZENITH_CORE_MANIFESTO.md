@@ -60,7 +60,8 @@
 *   **[BETA] The Generator (Placeholder AI Coach):** Visual neural presence of the AI in the interface.
 *   **[BETA] The Teacher (Interactive Flow):** Wiring the Pose Sequencer to the React UI for structured classes.
 *   **[BETA] The Voice of Flow (Sequencer TTS):** Giving the sequencer a voice for audible guidance.
-*   **[PLANNED] The Oracle (Proactive Vision):** Automated, periodic Multimodal LLM feedback during poses.
+*   **[BETA] The Oracle (Proactive Vision):** Automated, periodic Multimodal LLM feedback during poses.
+*   **[PLANNED] The Reflection (Session Report):** Post-workout analytics summary and "Zen Moment" highlight.
 
 ## 5. Technical Architecture
 *   **Input:** Single-camera feed (Smartphone).

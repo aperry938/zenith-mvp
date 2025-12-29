@@ -21,7 +21,7 @@ from data_harvester import DataHarvester
 from pose_sequencer import PoseSequencer
 
 # --- SERVER SETUP ---
-app = FastAPI(title="Zenith AI Gateway", version="Cycle 40 (Oracle)")
+app = FastAPI(title="Zenith AI Gateway", version="Cycle 41 (Reflection)")
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,7 +42,7 @@ latest_frame_cache = None
 
 @app.get("/")
 async def root():
-    return {"status": "Zenith AI Gateway Online", "cycle": 40}
+    return {"status": "Zenith AI Gateway Online", "cycle": 41}
 
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
@@ -127,12 +127,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         # 3. Oracle Check (Proactive Analysis)
                         if sequencer.check_oracle_trigger():
                              print("Meaningful Moment Detected. Triggering Oracle...")
-                             # We use the cached frame to avoid race conditions with decoding
                              if latest_frame_cache is not None:
-                                 # Fire and forget-ish (async task)
-                                 # We need to send the result back when it's done. 
-                                 # Since this is a loop, we can't await it here blocking the stream.
-                                 # We'll spawn a task to do it and send the ws message.
                                  asyncio.create_task(run_oracle_analysis(websocket, latest_frame_cache))
 
                         # 4. Session Recording
@@ -174,6 +169,18 @@ async def websocket_endpoint(websocket: WebSocket):
                     elif action == "toggle_harvest":
                         harvester.toggle()
                         print(f"Harvesting Toggled to {harvester.is_active}")
+                    
+                    elif action == "end_session":
+                         print("Ending Session...")
+                         if session_mgr.is_recording:
+                             session_mgr.stop_recording()
+                         
+                         # Generate Report
+                         stats = session_mgr.get_current_summary()
+                         await websocket.send_text(json.dumps({
+                             "type": "session_report",
+                             "stats": stats
+                         }))
 
                 except Exception as e:
                     print(f"Command Error: {e}")
