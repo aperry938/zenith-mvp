@@ -22,7 +22,7 @@
 ## 4. Key Innovations (Implemented & Planned)
 *   **[MVP] Static Pose Classifier:** Random Forest on MediaPipe keypoints.
 *   **[MVP] Quality VAE:** Variational Autoencoder for "weirdness" detection in poses.
-*   **[PLANNED] Voice of Flow (TTS Feedback):** Heuristic Text-to-Speech engine for real-time, non-visual form correction.
+*   **[BETA] Voice of Flow (TTS Feedback):** Heuristic Text-to-Speech engine (pyttsx3) for real-time form correction.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Multimodal LLM to generate natural language coaching cues.
 *   **[PLANNED] Fluidity Metric:** Jerk-based calculus to score vinyasa flow.
