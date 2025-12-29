@@ -1,18 +1,32 @@
 import { VideoStage } from './components/VideoStage';
 import { HUD } from './components/HUD';
 import { GhostOverlay } from './components/GhostOverlay';
+import { SessionControls } from './components/SessionControls';
 import { useZenithConnection } from './hooks/useZenithConnection';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function ZenithApp() {
-  const { isConnected, isConnecting, metrics, advice, landmarks, ghost, sendFrame, requestAnalysis } = useZenithConnection();
+  const {
+    isConnected,
+    isConnecting,
+    metrics,
+    advice,
+    landmarks,
+    ghost,
+    isRecording,
+    isHarvesting,
+    sendFrame,
+    requestAnalysis,
+    toggleRecording,
+    toggleHarvesting
+  } = useZenithConnection();
 
   return (
     <div className="w-screen h-screen flex flex-col bg-zenith-bg text-gray-100 overflow-hidden">
       {/* Header */}
       <header className="h-16 border-b border-zinc-800 flex justify-between items-center px-8 bg-zenith-panel z-10 relative">
         <div className="font-bold text-2xl tracking-widest text-white uppercase">
-          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v1.7 (Mirage)</span>
+          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v1.8 (Record)</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -39,13 +53,20 @@ function ZenithApp() {
         {/* Layer 1: The Mirage (Ghost/Skeleton) */}
         <GhostOverlay landmarks={landmarks} ghostFlat={ghost} />
 
-        {/* Layer 2: UI Overlay */}
+        {/* Layer 2: UI Overlays */}
         <HUD metrics={metrics} advice={advice} onRequestAnalysis={requestAnalysis} />
+
+        <SessionControls
+          isRecording={isRecording}
+          isHarvesting={isHarvesting}
+          onToggleRecord={toggleRecording}
+          onToggleHarvest={toggleHarvesting}
+        />
       </main>
 
       {/* Footer */}
       <footer className="h-10 border-t border-zinc-800 flex justify-center items-center text-xs text-zinc-600 bg-zenith-panel z-10 relative">
-        <p>Cycle 35: The Mirage</p>
+        <p>Cycle 36: The Record</p>
       </footer>
     </div>
   );

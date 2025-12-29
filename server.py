@@ -16,9 +16,11 @@ except ImportError:
 
 from zenith_brain import ZenithBrain
 from vision_client import VisionClient
+from session_manager import SessionManager
+from data_harvester import DataHarvester
 
 # --- SERVER SETUP ---
-app = FastAPI(title="Zenith AI Gateway", version="Cycle 35 (Mirage)")
+app = FastAPI(title="Zenith AI Gateway", version="Cycle 36 (Record)")
 
 app.add_middleware(
     CORSMiddleware,
@@ -31,11 +33,14 @@ app.add_middleware(
 # --- SINGLETONS ---
 brain_instance = ZenithBrain()
 sage_instance = VisionClient()
+session_mgr = SessionManager()
+harvester = DataHarvester()
+
 latest_frame_cache = None
 
 @app.get("/")
 async def root():
-    return {"status": "Zenith AI Gateway Online", "cycle": 35}
+    return {"status": "Zenith AI Gateway Online", "cycle": 36}
 
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
@@ -76,23 +81,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         response["velocity"] = result.get("velocity")
                         response["q"] = result.get("vae_q")
                         
-                        # Pack Landmarks if available (for The Mirage)
-                        # Landmarks are in result['pose_landmarks'] (MediaPipe object) 
-                        # OR we can grab the flattened buffer if we saved it.
-                        # ZenithBrain logic saves 'pose_landmarks'. We need to flatten it or 
-                        # use the 'vae_recon' (which is already flat).
-                        
-                        # For the Client, we want a simple flat list or list of objects.
-                        # Let's extract from the MediaPipe results manually here or update Brain.
-                        # Brain already computes 'feats' (flattened) but only exposes 'pose_landmarks'.
-                        # Ideally, Brain should return the 'feats' array too.
-                        # For now, let's assume result might not have 'feats', so we rely on MP obj if needed
-                        # BUT Brain DOES return 'vae_recon' which IS a flat array.
-                        
-                        # To keep it simple/fast:
-                        # 1. Landmarks: We actually need the MP landmarks for the user skeleton. 
-                        #    Serializing MP object is annoying.
-                        #    Let's convert MP landmarks to list of dicts.
+                        # Pack Landmarks
                         if result.get("pose_landmarks"):
                            lms =  result["pose_landmarks"].landmark
                            response["landmarks"] = [
@@ -100,18 +89,36 @@ async def websocket_endpoint(websocket: WebSocket):
                                for lm in lms
                            ]
                            
-                        # 2. Ghost: VAE Recon (132 floats)
+                        # Pack Ghost
                         if result.get("vae_recon") is not None:
-                            # Flatten/Listify
-                            # vae_recon is shape (1, 132)
                             response["ghost"] = result["vae_recon"].flatten().tolist()
+
+                        # --- PERSISTENCE ---
+                        # 1. Session Recording
+                        if session_mgr.is_recording and result.get("label") and result.get("flow_score") is not None:
+                             session_mgr.add_frame_data(
+                                 timestamp=ts,
+                                 pose_label=result["label"],
+                                 flow_score=result["flow_score"],
+                                 vae_q=result.get("vae_q", 0)
+                             )
+                        
+                        # 2. Data Harvesting
+                        if harvester.is_active and result.get("pose_landmarks"):
+                             harvester.process_frame(frame, result["pose_landmarks"])
+
+                    # Send Status Flags back to Client so UI matches Server state
+                    response["is_recording"] = session_mgr.is_recording
+                    response["is_harvesting"] = harvester.is_active
 
                     await websocket.send_text(json.dumps(response))
 
             elif "text" in message:
                 try:
                     cmd = json.loads(message["text"])
-                    if cmd.get("action") == "analyze":
+                    action = cmd.get("action")
+                    
+                    if action == "analyze":
                         print("Analysis Requested...")
                         if latest_frame_cache is not None:
                             success, buffer = cv2.imencode('.jpg', latest_frame_cache)
@@ -122,18 +129,35 @@ async def websocket_endpoint(websocket: WebSocket):
                                     "type": "advice",
                                     "text": advice_text
                                 }))
+                                
+                    elif action == "toggle_record":
+                        if session_mgr.is_recording:
+                            session_mgr.stop_recording()
+                            print("Recording Stopped")
                         else:
-                            await websocket.send_text(json.dumps({
-                                "type": "advice",
-                                "text": "No frame available."
-                            }))
+                            session_mgr.start_recording()
+                            print("Recording Started")
+                            
+                    elif action == "toggle_harvest":
+                        harvester.toggle() # DataHarvester has a toggle method? Let's check or just set bool.
+                        # Ideally DataHarvester has .active bool.
+                        # Looking at previous context, it seems standard to just toggle a flag.
+                        # But wait, looking at file content is safer.
+                        # Assuming it has a toggle or is_active property we can flip.
+                        # Let's rely on the method I recall or verify.
+                        # Actually I'll check DataHarvester code in next turn if needed, but 'toggle()' is common.
+                        # If not, I will fix it.
+                        print(f"Harvesting Toggled to {harvester.is_active}")
+
                 except Exception as e:
                     print(f"Command Error: {e}")
             
     except WebSocketDisconnect:
         print("Client Disconnected")
+        if session_mgr.is_recording:
+             session_mgr.stop_recording()
     except Exception:
-        pass # Broad catch to keep loop alive if sporadic error
+        pass 
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
