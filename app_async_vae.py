@@ -44,7 +44,6 @@ tf.config.threading.set_inter_op_parallelism_threads(1)
 if 'session' not in st.session_state:
     if SessionManager: st.session_state['session'] = SessionManager()
     else:
-        # Dummy
         class DummySession:
             def update(self, *args): pass
             def log_stability_event(self): pass
@@ -71,8 +70,8 @@ harvester = st.session_state['harvester']
 
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Gallery (Beta)")
-st.write("Review your best moments.")
+st.title("ZENith $ZEN^{ith}$ - The Ecosystem (Beta)")
+st.write("Dynamic Voice Active.")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 metrics = session.get_current_summary()
@@ -102,7 +101,6 @@ if st.sidebar.button("End Session & Save"):
 st.sidebar.markdown("---")
 st.sidebar.header("Session Gallery")
 if st.sidebar.button("Refresh Gallery"):
-    # Scan dataset/ folder
     images = []
     dataset_root = "dataset"
     if os.path.exists(dataset_root):
@@ -112,11 +110,7 @@ if st.sidebar.button("Refresh Gallery"):
                 for f in os.listdir(pd):
                     if f.endswith(".jpg"):
                          images.append(os.path.join(pd, f))
-    
-    # Sort by modify time (newest first)
     images.sort(key=os.path.getmtime, reverse=True)
-    
-    # Show top 5
     for img_path in images[:5]:
         st.sidebar.image(img_path, caption=os.path.basename(img_path), use_column_width=True)
 
@@ -149,6 +143,10 @@ threading.Thread(target=tts_worker, daemon=True).start()
 last_spoken_time = 0
 DEBOUNCE_SECONDS = 5.0 
 active_correction = None 
+
+# NEW: Dynamic Voice State
+last_flow_msg_time = 0
+FLOW_MSG_DEBOUNCE = 10.0
 
 stability_start_time = None
 is_locked = False
@@ -247,10 +245,10 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     global stability_start_time, is_locked, STABILITY_THRESHOLD
     global prev_landmarks_array, current_flow_score, prev_velocity, flow_history
     global session, sequencer, ui, harvester
+    global last_flow_msg_time # NEW
     
     img = frame.to_ndarray(format="bgr24")
 
-    # FPS
     t1 = time.time(); dt = t1 - t0; t0 = t1
     if dt > 0: fps = 0.9*fps + 0.1*(1.0/dt) if fps else (1.0/dt)
 
@@ -265,6 +263,15 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
              current_flow_score = (alpha_flow * score) + ((1-alpha_flow) * current_flow_score)
              prev_velocity = velocity
         prev_landmarks_array = curr_flat
+        
+        # --- DYNAMIC VOICE (Flow) ---
+        if use_tts and (time.time() - last_flow_msg_time > FLOW_MSG_DEBOUNCE):
+            if current_flow_score < 40:
+                tts_queue.put("Smooth it out. Find your center.")
+                last_flow_msg_time = time.time()
+            elif current_flow_score > 90 and velocity > 0.1: # moving well
+                tts_queue.put("Excellent flow. Keep moving.")
+                last_flow_msg_time = time.time()
     
     # Skel
     if res.pose_landmarks:
@@ -322,7 +329,6 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                                 is_locked = True
                                 session.log_stability_event() 
                                 
-                                # --- HARVEST ---
                                 if use_data and harvester and label:
                                     q_val = last_q if last_q is not None else 0
                                     harvester.save_frame(img, label, q_val)
