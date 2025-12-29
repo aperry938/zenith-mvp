@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+opencv-python
+mediapipe
+numpy
+tensorflow
+keras
+websockets
+python-multipart
+google-generativeai
+python-dotenv
