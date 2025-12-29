@@ -43,7 +43,8 @@
 *   **[BETA] The Identity (Ghost Body):** Filled geometric visualization for the VAE Ghost.
 *   **[BETA] The Voice of the Sage (TTS Integration):** Vocalization of Gemini-based coaching.
 *   **[BETA] The Mirror (Cinematic UI):** Cinematic color grading and adaptive overlays.
-*   **[PLANNED] The Signal (Async Brain):** Threaded AI processing for high-FPS UI.
+*   **[BETA] The Signal (Async Brain):** Threaded AI processing for high-FPS UI.
+*   **[PLANNED] The Pulse (Smoother Flow):** Robust velocity smoothing for better 'Flow' metrics.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
