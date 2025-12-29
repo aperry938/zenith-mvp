@@ -48,7 +48,8 @@
 *   **[BETA] The API Gateway (FastAPI Server):** WebSocket-based AI inference server.
 *   **[BETA] The Bridge (Client Test):** End-to-end verification of the fullstack loop.
 *   **[BETA] The Face (React Initialization):** Modern Vite/React frontend setup.
-*   **[PLANNED] The Retina (React Video Stream):** Bi-directional Webcam -> Server -> JSON stream.
+*   **[BETA] The Retina (React Video Stream):** Bi-directional Webcam -> Server -> JSON stream.
+*   **[PLANNED] The HUD (React UI Overlay):** Modularize UI components and enhance visuals.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
