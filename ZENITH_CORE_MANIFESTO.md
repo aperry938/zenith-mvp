@@ -26,7 +26,8 @@
 *   **[BETA] Visual Whispers (AR Cues):** Augmented Reality vector overlays (OpenCV) for precise directional guidance.
 *   **[BETA] Stability Engine (Gamified Stillness):** Visual Halo + Audio "Lock-In" reward for holding perfect form.
 *   **[BETA] The Fluidity Metric (Flow Score):** Real-time measurement of movement smoothness (Inverse Jerk).
-*   **[PLANNED] The Persona (Dynamic Coaching):** Varied sentence structures and "empathic" feedback to reduce robotic repetition.
+*   **[BETA] The Persona (Dynamic Coaching):** Varied sentence structures and "empathic" feedback.
+*   **[PLANNED] The Record (Session Memory):** Analytics summary (Total Frames, Average Flow, Stability Count) after session.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Multimodal LLM to generate natural language coaching cues.
 *   **[PLANNED] "Yoga-Diverse" Dataset:** Proprietary dataset for debiasing pose estimation.
