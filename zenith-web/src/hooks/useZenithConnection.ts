@@ -5,11 +5,13 @@ interface ZenithMetrics {
     flow: number;
     velocity: number;
     q: number;
+    advice?: string;
 }
 
 export const useZenithConnection = () => {
     const [isConnected, setIsConnected] = useState(false);
     const [metrics, setMetrics] = useState<ZenithMetrics | null>(null);
+    const [advice, setAdvice] = useState<string | null>(null);
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<number | undefined>(undefined);
 
@@ -24,14 +26,17 @@ export const useZenithConnection = () => {
         wsRef.current.onclose = () => {
             console.log("Zenith Disconnected");
             setIsConnected(false);
-            // Simple reconnect logic
             reconnectTimeoutRef.current = setTimeout(connect, 3000);
         };
 
         wsRef.current.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                setMetrics(data);
+                if (data.type === 'advice') {
+                    setAdvice(data.text);
+                } else {
+                    setMetrics(data);
+                }
             } catch (e) {
                 console.error("Parse Error", e);
             }
@@ -52,5 +57,11 @@ export const useZenithConnection = () => {
         }
     }, []);
 
-    return { isConnected, metrics, sendFrame };
+    const requestAnalysis = useCallback(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ action: "analyze" }));
+        }
+    }, []);
+
+    return { isConnected, metrics, advice, sendFrame, requestAnalysis };
 };
