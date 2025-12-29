@@ -49,7 +49,8 @@
 *   **[BETA] The Bridge (Client Test):** End-to-end verification of the fullstack loop.
 *   **[BETA] The Face (React Initialization):** Modern Vite/React frontend setup.
 *   **[BETA] The Retina (React Video Stream):** Bi-directional Webcam -> Server -> JSON stream.
-*   **[PLANNED] The HUD (React UI Overlay):** Modularize UI components and enhance visuals.
+*   **[BETA] The HUD (React UI Overlay):** Modularize UI components and enhance visuals.
+*   **[PLANNED] The Nervous System (State Management):** Robust state handling for connection/metrics.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
