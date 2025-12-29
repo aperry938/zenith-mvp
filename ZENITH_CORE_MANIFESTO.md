@@ -24,7 +24,7 @@
 *   **[MVP] Quality VAE:** Variational Autoencoder for "weirdness" detection in poses.
 *   **[BETA] Voice of Flow (TTS Feedback):** Heuristic Text-to-Speech engine (pyttsx3) for real-time form correction.
 *   **[BETA] Visual Whispers (AR Cues):** Augmented Reality vector overlays (OpenCV) for precise directional guidance.
-*   **[PLANNED] Gamified Stability (The Lock-In):** Visual reward effects for holding perfect form (Stillness).
+*   **[BETA] Stability Engine (Gamified Stillness):** Visual Halo + Audio "Lock-In" reward for holding perfect form.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Multimodal LLM to generate natural language coaching cues.
 *   **[PLANNED] Fluidity Metric:** Jerk-based calculus to score vinyasa flow.
