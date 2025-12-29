@@ -33,11 +33,12 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.threading.set_inter_op_parallelism_threads(1)
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - Visual Whispers (AR Beta)")
-st.write("Perform a yoga flow. The AI will provide audio AND visual corrections.")
+st.title("ZENith $ZEN^{ith}$ - The Stability Engine (Beta)")
+st.write("Hold your pose. Charge the shield. Lock in.")
 use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
 use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
 use_ar   = st.sidebar.checkbox("Enable Visual Whispers (AR)", value=True)
+use_gamification = st.sidebar.checkbox("Enable Stability Engine", value=True)
 show_dbg = st.sidebar.checkbox("Show debug logs", value=False)
 st.sidebar.header("Status / Debug")
 
@@ -79,6 +80,11 @@ threading.Thread(target=tts_worker, daemon=True).start()
 last_spoken_time = 0
 DEBOUNCE_SECONDS = 5.0 
 active_correction = None # Store current correction for drawing
+
+# Stability Engine State
+stability_start_time = None
+is_locked = False
+STABILITY_THRESHOLD = 3.0 # Seconds to hold for lock-in
 
 # ---------- Classifier ----------
 pose_classifier, clf_ok = None, False
@@ -177,19 +183,53 @@ def draw_hud(img, label, q, fps):
 def draw_ar_arrow(img, start_norm, end_norm, color=(255, 255, 0), thickness=4):
     """
     Draws a correction arrow on the image.
-    Inputs are normalized coordinates (0.0 - 1.0).
-    Color should be BGR.
     """
     h, w, _ = img.shape
     start_px = (int(start_norm[0] * w), int(start_norm[1] * h))
     end_px   = (int(end_norm[0] * w), int(end_norm[1] * h))
     
     cv2.arrowedLine(img, start_px, end_px, color, thickness, tipLength=0.3)
-    # Draw a Glow bloom? (Simple circle at tip)
     cv2.circle(img, end_px, 6, (255,255,255), -1)
+
+def draw_stability_halo(img, landmarks, progress, is_locked):
+    """
+    Draws an ellipse halo around the user.
+    progress: 0.0 - 1.0 (Charging)
+    is_locked: bool (Gold state)
+    """
+    h, w, _ = img.shape
+    
+    # Calculate bounding box of pose
+    xs = [lm.x for lm in landmarks.landmark]
+    ys = [lm.y for lm in landmarks.landmark]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    
+    center_x = int(((min_x + max_x) / 2) * w)
+    center_y = int(((min_y + max_y) / 2) * h)
+    
+    axis_x = int(((max_x - min_x) / 1.5) * w) # Width of ellipse
+    axis_y = int(((max_y - min_y) / 1.5) * h) # Height of ellipse
+    
+    if is_locked:
+        color = (0, 215, 255) # GOLD (BGR)
+        thickness = 5
+        # Add "Glow" effect by drawing multiple rings
+        cv2.ellipse(img, (center_x, center_y), (axis_x, axis_y), 0, 0, 360, color, thickness)
+        cv2.ellipse(img, (center_x, center_y), (axis_x+10, axis_y+10), 0, 0, 360, (0, 165, 255), 2)
+    else:
+        # Charging Blue
+        color = (255, 120, 0) # Azure Blue
+        thickness = 2
+        # Partial arc based on progress
+        end_angle = int(360 * progress)
+        cv2.ellipse(img, (center_x, center_y), (axis_x, axis_y), 0, 0, end_angle, color, thickness)
+
 
 def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     global i, fps, t0, last_label, last_ok_ts, vae_future, last_q, last_spoken_time, active_correction
+    global stability_start_time, is_locked
+    
     img = frame.to_ndarray(format="bgr24")
 
     # FPS
@@ -223,17 +263,30 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                     correction = PoseHeuristics.evaluate(label, lms)
                     
                     if correction:
+                        # ACTIVE CORRECTION STATE
+                        active_correction = correction
+                        stability_start_time = None # Reset stability
+                        is_locked = False
+                        
                         # AUDIO
                         if use_tts:
                             now = time.time()
                             if (now - last_spoken_time) > DEBOUNCE_SECONDS:
                                 tts_queue.put(correction['text'])
                                 last_spoken_time = now
-                        
-                        # VISUAL (Store for drawing every frame)
-                        active_correction = correction
                     else:
+                        # STABILITY STATE (Good Form)
                         active_correction = None
+                        if use_gamification:
+                            if stability_start_time is None:
+                                stability_start_time = time.time()
+                            
+                            duration = time.time() - stability_start_time
+                            
+                            if duration > STABILITY_THRESHOLD and not is_locked:
+                                is_locked = True
+                                if use_tts:
+                                    tts_queue.put("Locked.")
 
             # Non-blocking VAE
             if use_vae and vae_ok:
@@ -256,17 +309,18 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     if (time.time() - last_ok_ts) < TTL:
         label = label or last_label
 
-    # --- RENDER VISUAL WHISPERS ---
+    # --- RENDER VISUAL LAYERS ---
+    
+    # Layer 1: Stability Halo (Behind arrows)
+    if use_gamification and stability_start_time is not None and res.pose_landmarks:
+        duration = time.time() - stability_start_time
+        progress = min(duration / STABILITY_THRESHOLD, 1.0)
+        draw_stability_halo(img, res.pose_landmarks, progress, is_locked)
+    
+    # Layer 2: Visual Whispers (AR Arrows)
     if use_ar and active_correction:
-        # Ensure correction has a vector
         if 'vector' in active_correction:
             start_pt, end_pt = active_correction['vector']
-            # Color is RGB in dict (usually), convert to BGR for OpenCV
-            # Our Foundations file returns (0, 255, 255) which is Yellow/Cyan.
-            # Let's assume the Foundations file returns BGR or we fix it here.
-            # Foundations returns (0, 255, 255) -> Yellow in RGB. BGR would be (255, 255, 0)
-            col = active_correction.get('color', (0, 255, 255))
-            # Fix if needed. Let's just use Cyan (255, 255, 0 in BGR)
             draw_ar_arrow(img, start_pt, end_pt, color=(255, 255, 0))
 
     draw_hud(img, label, q_disp, fps)
