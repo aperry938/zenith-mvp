@@ -44,7 +44,8 @@
 *   **[BETA] The Voice of the Sage (TTS Integration):** Vocalization of Gemini-based coaching.
 *   **[BETA] The Mirror (Cinematic UI):** Cinematic color grading and adaptive overlays.
 *   **[BETA] The Signal (Async Brain):** Threaded AI processing for high-FPS UI.
-*   **[PLANNED] The Pulse (Smoother Flow):** Robust velocity smoothing for better 'Flow' metrics.
+*   **[BETA] The Pulse (Smoother Flow):** Robust velocity smoothing for better 'Flow' metrics.
+*   **[PLANNED] The API Gateway (FastAPI Server):** WebSocket-based AI inference server.
 *   **[PLANNED] Generative AI Coach:** Hybrid GAN (Asset) + Diffusion (Motion) model for the avatar.
 *   **[PLANNED] Vision-LLM Feedback:** Real-time Multimodal LLM (Future Goal).
 
