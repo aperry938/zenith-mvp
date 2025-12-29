@@ -80,7 +80,7 @@ class ZenithUI:
         w_box = 200
         h_box = 80
         x = w - w_box - 20
-        y = 50 # Moved down slightly to avoid FPS overlap
+        y = 50 
         
         # BG
         cv2.rectangle(img, (x, y), (x+w_box, y+h_box), (50, 50, 50), -1)
@@ -107,7 +107,6 @@ class ZenithUI:
         cv2.circle(img, end_px, 6, self.C_TEXT, -1)
         
         if text:
-            # Add a small backdrop for text readability
             (tw, th), _ = cv2.getTextSize(text, self.F_MAIN, 0.6, 2)
             bg_pt1 = (end_px[0] + 8, end_px[1] - th - 4)
             bg_pt2 = (end_px[0] + 12 + tw, end_px[1] + 4)
@@ -131,7 +130,6 @@ class ZenithUI:
         if is_locked:
             color = (0, 215, 255) # Gold/Orange
             thickness = 5
-            # Double ring for Lock
             cv2.ellipse(img, (center_x, center_y), (axis_x, axis_y), 0, 0, 360, color, thickness)
             cv2.ellipse(img, (center_x, center_y), (axis_x+12, axis_y+12), 0, 0, 360, (0, 165, 255), 2)
         else:
@@ -139,3 +137,17 @@ class ZenithUI:
             thickness = 2
             end_angle = int(360 * progress)
             cv2.ellipse(img, (center_x, center_y), (axis_x, axis_y), 0, 0, end_angle, color, thickness)
+
+    def draw_grid(self, img):
+        """Draws a 3x3 Grid (Rule of Thirds)."""
+        h, w, _ = img.shape
+        color = (50, 50, 50)
+        thickness = 1
+        
+        # Verticals
+        cv2.line(img, (int(w/3), 0), (int(w/3), h), color, thickness)
+        cv2.line(img, (int(2*w/3), 0), (int(2*w/3), h), color, thickness)
+        
+        # Horizontals
+        cv2.line(img, (0, int(h/3)), (w, int(h/3)), color, thickness)
+        cv2.line(img, (0, int(2*h/3)), (w, int(2*h/3)), color, thickness)

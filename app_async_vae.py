@@ -25,7 +25,7 @@ try:
     from ui_overlay import ZenithUI
     from session_manager import SessionManager
     from data_harvester import DataHarvester
-    from vision_client import VisionClient # NEW
+    from vision_client import VisionClient
 except ImportError:
     PoseHeuristics = None  
     PoseSequencer = None
@@ -75,14 +75,13 @@ if 'sage' not in st.session_state:
     else: st.session_state['sage'] = None
 sage = st.session_state['sage']
 
-# Global frame storage for snapshot
 if 'latest_frame' not in st.session_state:
     st.session_state['latest_frame'] = None
 
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Sage (Beta)")
-st.write("On-Demand Vision Analyst Active.")
+st.title("ZENith $ZEN^{ith}$ - The Holo-Deck (Beta)")
+st.write("Alignment Grid Active.")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 metrics = session.get_current_summary()
@@ -97,6 +96,7 @@ col5.metric("Total Practice", life_metrics["Total Time"])
 use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
 use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
 use_ar   = st.sidebar.checkbox("Enable Visual Whispers (AR)", value=True)
+use_grid = st.sidebar.checkbox("Enable Holo-Deck (Grid)", value=True) # NEW
 use_gamification = st.sidebar.checkbox("Enable Stability Engine", value=True)
 use_flow = st.sidebar.checkbox("Enable Flow Score", value=True)
 use_seq  = st.sidebar.checkbox("Enable Sequencer", value=True)
@@ -108,7 +108,7 @@ if st.sidebar.button("End Session & Save"):
     session.save_session()
     st.sidebar.success("Saved to Vault.")
 
-# --- THE SAGE (Vision Analysis) ---
+# --- THE SAGE ---
 st.sidebar.markdown("---")
 st.sidebar.header("The Sage")
 if st.sidebar.button("Analyze Latest Frame"):
@@ -119,8 +119,7 @@ if st.sidebar.button("Analyze Latest Frame"):
     else:
         st.sidebar.warning("No frame available yet.")
 
-
-# --- GALLERY LOGIC ---
+# --- GALLERY ---
 st.sidebar.markdown("---")
 st.sidebar.header("Session Gallery")
 if st.sidebar.button("Refresh Gallery"):
@@ -271,10 +270,7 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     
     img = frame.to_ndarray(format="bgr24")
     
-    # Capture for Sage
-    if use_tts: # Slight hack: update global frame frequently enough for snapshot
-        # We need to make a copy to avoid race conditions with Streamlit display?
-        # Actually session state is thread-safe-ish.
+    if use_tts: 
         st.session_state['latest_frame'] = img.copy()
 
     t1 = time.time(); dt = t1 - t0; t0 = t1
@@ -385,6 +381,9 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
 
     # --- RENDER (ZENITH UI) ---
     if ui:
+        if use_grid:
+            ui.draw_grid(img) # NEW: Draw Grid First (Background layer)
+
         if use_gamification and stability_start_time is not None and res.pose_landmarks:
             duration = time.time() - stability_start_time
             progress = min(duration / STABILITY_THRESHOLD, 1.0)
