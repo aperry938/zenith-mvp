@@ -1,8 +1,9 @@
-import os, time
+import os, time, sys
 from collections import deque, Counter
 import concurrent.futures as cf
 import threading, queue
 import random
+import atexit # NEW
 
 import streamlit as st
 st.set_page_config(layout="wide", page_title="ZENith - Live MVP")
@@ -21,11 +22,13 @@ from tensorflow.keras import layers
 try:
     from pose_foundations import PoseHeuristics
     from pose_sequencer import PoseSequencer
-    from ui_overlay import ZenithUI # NEW
+    from ui_overlay import ZenithUI
+    from session_manager import SessionManager # NEW
 except ImportError:
     PoseHeuristics = None  
     PoseSequencer = None
     ZenithUI = None
+    SessionManager = None
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 try:
@@ -36,40 +39,19 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.threading.set_inter_op_parallelism_threads(1)
 
 # ---------- SESSION ----------
-class SessionRecorder:
-    def __init__(self):
-        self.start_time = time.time()
-        self.total_frames = 0
-        self.flow_scores = []
-        self.stability_events = 0
-        self.stability_seconds = 0.0
-        self.poses_detected = Counter()
-
-    def update(self, pose_label, flow_score, is_stable, fps):
-        self.total_frames += 1
-        if flow_score is not None:
-            self.flow_scores.append(flow_score)
-        if is_stable and fps > 0:
-            self.stability_seconds += (1.0 / fps)
-        if pose_label:
-            self.poses_detected[pose_label] += 1
-    
-    def log_stability_event(self):
-        self.stability_events += 1
-
-    def get_summary(self):
-        duration = time.time() - self.start_time
-        avg_flow = sum(self.flow_scores) / len(self.flow_scores) if self.flow_scores else 0
-        return {
-            "Duration": f"{int(duration)}s",
-            "Avg Flow": f"{int(avg_flow)}",
-            "Stability Events": self.stability_events,
-            "Zone Time": f"{self.stability_seconds:.1f}s",
-            "Top Pose": self.poses_detected.most_common(1)[0][0] if self.poses_detected else "None"
-        }
-
 if 'session' not in st.session_state:
-    st.session_state['session'] = SessionRecorder()
+    if SessionManager:
+        st.session_state['session'] = SessionManager()
+    else:
+        # Fallback dummy
+        class DummySession:
+            def update(self, *args): pass
+            def log_stability_event(self): pass
+            def get_current_summary(self): return {"Duration":"0s", "Avg Flow":"0", "Stability Events":0, "Zone Time":"0s", "Top Pose":"-"}
+            def get_lifetime_summary(self): return {"Total Time":"0h 0m", "Sessions":0}
+            def save_session(self): pass
+        st.session_state['session'] = DummySession()
+
 session = st.session_state['session']
 
 if 'sequencer' not in st.session_state:
@@ -83,15 +65,18 @@ if 'ui' not in st.session_state:
 ui = st.session_state['ui']
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Unification (Beta)")
-st.write("Unified Design System active.")
+st.title("ZENith $ZEN^{ith}$ - The Vault (Beta)")
+st.write("Persistent Stats Active.")
 
-col1, col2, col3, col4 = st.columns(4)
-metrics = session.get_summary()
+col1, col2, col3, col4, col5 = st.columns(5)
+metrics = session.get_current_summary()
+life_metrics = session.get_lifetime_summary()
+
 col1.metric("Avg Flow", metrics["Avg Flow"])
 col2.metric("In The Zone", metrics["Zone Time"])
 col3.metric("Locks", metrics["Stability Events"])
 col4.metric("Top Pose", metrics["Top Pose"])
+col5.metric("Total Practice", life_metrics["Total Time"]) # NEW
 
 use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
 use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
@@ -101,6 +86,11 @@ use_flow = st.sidebar.checkbox("Enable Flow Score", value=True)
 use_seq  = st.sidebar.checkbox("Enable Sequencer", value=True)
 show_dbg = st.sidebar.checkbox("Show debug logs", value=False)
 st.sidebar.header("Status / Debug")
+
+# Save button (Streamlit re-runs script often, but we need explicit save sometimes)
+if st.sidebar.button("End Session & Save"):
+    session.save_session()
+    st.sidebar.success("Saved to Vault.")
 
 CLF_PATH   = "zenith_pose_classifier.pkl"
 ENC_W_PATH = "zenith_encoder_weights.weights.h5"
