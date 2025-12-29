@@ -25,6 +25,9 @@ class PoseSequencer:
         self.pose_start_time = None
         self.completed = False
         self._current_announcement = "Welcome to Zenith. Let's begin with Mountain Pose."
+        
+        # Oracle State
+        self.analysis_triggered_for_current_pose = False
 
     def get_current_goal(self):
         if self.completed:
@@ -43,6 +46,21 @@ class PoseSequencer:
         msg = self._current_announcement
         self._current_announcement = None
         return msg
+
+    def check_oracle_trigger(self):
+        """
+        Checks if the Oracle (Auto-Analysis) should be triggered.
+        Condition: User has held the correct pose for > 5 seconds AND it hasn't been analyzed yet.
+        """
+        if self.pose_start_time is None or self.analysis_triggered_for_current_pose:
+            return False
+            
+        time_held = time.time() - self.pose_start_time
+        if time_held > 5.0:
+            self.analysis_triggered_for_current_pose = True # Prevent spam
+            return True
+            
+        return False
 
     def update(self, detected_label, is_stable):
         """
@@ -81,9 +99,15 @@ class PoseSequencer:
         if detected_label == target:
             if self.pose_start_time is None:
                 self.pose_start_time = time.time()
+                self.analysis_triggered_for_current_pose = False # Reset for new attempt at this pose
             
             # If held for 3 seconds (Stable) -> Advance
-            if time.time() - self.pose_start_time > 3.0:
+            # Wait, if we advance at 3 seconds, we'll never reach 5 seconds for the Oracle!
+            # Let's bump the advance time to 8 seconds to allow for analysis, 
+            # or make Oracle trigger quicker (e.g. 2s) and Advance at 5s.
+            # Let's do: Oracle at 4s, Advance at 8s. giving time to hear advice.
+            
+            if time.time() - self.pose_start_time > 8.0:
                  self.advance()
                  return "Advance"
         else:
@@ -94,6 +118,7 @@ class PoseSequencer:
     def advance(self):
         self.current_index += 1
         self.pose_start_time = None
+        self.analysis_triggered_for_current_pose = False # Reset for next pose
         self.last_transition_time = time.time()
         
         if self.current_index >= len(self.sequence):
