@@ -80,8 +80,8 @@ if 'latest_frame' not in st.session_state:
 
 
 # ---------- UI ----------
-st.title("ZENith $ZEN^{ith}$ - The Holo-Deck (Beta)")
-st.write("Alignment Grid Active.")
+st.title("ZENith $ZEN^{ith}$ - The Ghost (Beta)")
+st.write("VAE Reconstruction Overlay Active.")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 metrics = session.get_current_summary()
@@ -94,9 +94,11 @@ col4.metric("Top Pose", metrics["Top Pose"])
 col5.metric("Total Practice", life_metrics["Total Time"])
 
 use_vae  = st.sidebar.checkbox("Enable VAE Quality Score", value=True)
+# NEW: Ghost Toggle
+use_ghost = st.sidebar.checkbox("Enable The Ghost (VAE Overlay)", value=True)
 use_tts  = st.sidebar.checkbox("Enable Voice Coach", value=True)
 use_ar   = st.sidebar.checkbox("Enable Visual Whispers (AR)", value=True)
-use_grid = st.sidebar.checkbox("Enable Holo-Deck (Grid)", value=True) # NEW
+use_grid = st.sidebar.checkbox("Enable Holo-Deck (Grid)", value=True)
 use_gamification = st.sidebar.checkbox("Enable Stability Engine", value=True)
 use_flow = st.sidebar.checkbox("Enable Flow Score", value=True)
 use_seq  = st.sidebar.checkbox("Enable Sequencer", value=True)
@@ -222,15 +224,18 @@ if use_vae:
     except Exception as e:
         st.sidebar.error(f"VAE load error: {e}")
 
+# UPDATED: Return (quality, recon_array)
 def vae_quality(flat_keypoints, low=0.0005, high=0.006):
     z_mean, _, z = encoder.predict(flat_keypoints, verbose=0)
     recon = decoder.predict(z, verbose=0)
     mse = float(np.mean((flat_keypoints - recon) ** 2))
     q = 100.0 * (1.0 - (mse - low) / (high - low))
-    return float(np.clip(q, 0, 100))
+    return float(np.clip(q, 0, 100)), recon
+
 vae_pool = cf.ThreadPoolExecutor(max_workers=1)
 vae_future = None
 last_q = None
+last_recon = None # NEW
 alpha = 0.25 
 
 mp_pose = mp.solutions.pose
@@ -266,7 +271,7 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     global stability_start_time, is_locked, STABILITY_THRESHOLD
     global prev_landmarks_array, current_flow_score, prev_velocity, flow_history
     global session, sequencer, ui, harvester, sage
-    global last_flow_msg_time 
+    global last_flow_msg_time, last_recon
     
     img = frame.to_ndarray(format="bgr24")
     
@@ -362,9 +367,10 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
                 if (i % 6 == 0) and (vae_future is None or vae_future.done()):
                     vae_future = vae_pool.submit(vae_quality, feats.copy())
                 if vae_future is not None and vae_future.done():
-                    q = vae_future.result()
+                    q, recon = vae_future.result()
                     last_q = q if last_q is None else (alpha*q + (1-alpha)*last_q)
                     q_disp = last_q
+                    last_recon = recon # Store raw recon
 
             if label or q_disp is not None:
                 last_label = label or last_label
@@ -382,7 +388,11 @@ def process_frame(frame: av.VideoFrame) -> av.VideoFrame:
     # --- RENDER (ZENITH UI) ---
     if ui:
         if use_grid:
-            ui.draw_grid(img) # NEW: Draw Grid First (Background layer)
+            ui.draw_grid(img)
+            
+        # Draw Ghost (underneath other overlays)
+        if use_ghost and last_recon is not None:
+            ui.draw_ghost(img, last_recon)
 
         if use_gamification and stability_start_time is not None and res.pose_landmarks:
             duration = time.time() - stability_start_time
