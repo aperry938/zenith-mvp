@@ -66,3 +66,4 @@ Thumbs.db
 .coverage
 htmlcov/
 .mypy_cache/
+.DS_Store
