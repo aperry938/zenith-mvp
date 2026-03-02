@@ -6,7 +6,9 @@
 
 ## Abstract
 
-This project investigates real-time biomechanical form assessment through a computer vision pipeline integrating MediaPipe pose estimation, a custom Variational Autoencoder for movement quality scoring, and Random Forest classification across 10 yoga poses. A novel video dataset of 100+ self-recorded sequences bridges kinesiology expertise with supervised learning. The system explores how AI feedback for embodied practice can be designed to support skill acquisition.
+ZENith is a real-time biomechanical movement quality assessment system that uses webcam-based pose estimation to provide expert-level yoga coaching feedback. The system integrates MediaPipe pose estimation with 30 expert-designed biomechanical features (joint angles, segment ratios, symmetry metrics, stability indicators), a Variational Autoencoder for continuous quality scoring, and Random Forest classification across 10 yoga poses. A novel dataset of 98 self-recorded video sequences with semi-automated kinesiologist annotations bridges embodied expertise with supervised learning.
+
+The core contribution is **biomechanically-grounded feature engineering**: 30 anatomically meaningful features designed by a researcher with dual credentials (M.S. Kinesiology (CBU), B.S. Kinesiology (SDSU), 500hr RYT) achieve equivalent classification accuracy to 132 raw landmark values with 4.4x fewer dimensions, while enabling interpretable quality feedback.
 
 ---
 
@@ -20,77 +22,217 @@ A short video demonstrating the live application can be found here:
 
 ## System Architecture
 
-```mermaid
-graph LR
-    User[User / Webcam] -->|Video Stream| Client[React Frontend]
-    Client -->|WebSocket| Server[FastAPI Gateway]
-    Server -->|Frame| Brain[ZenithBrain]
-
-    Brain -->|MediaPipe| Pose[Pose Detection]
-    Brain -->|Classifier| Label[Pose Label]
-    Brain -->|VAE| Quality[Form Quality Score]
-    Brain -->|Flow Logic| Flow[Flow/Velocity Score]
-
-    Server -->|Advice Request| Sage[Gemini Vision Client]
-    Sage -->|Text Guidance| Server
-
-    Brain -->|JSON Metadata| Server
-    Server -->|JSON Stream| Client
-
-    Client -->|Visuals| HUD[HUD Overlay]
-    Client -->|Audio| Voice[Web Speech API]
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        React Frontend (Vite)                        │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │
+│  │VideoStage│  │   HUD    │  │  Ghost   │  │ BiomechanicalPanel│  │
+│  │(webcam)  │  │(metrics) │  │ Overlay  │  │ (quality + angles)│  │
+│  └────┬─────┘  └────▲─────┘  └────▲─────┘  └────────▲──────────┘  │
+│       │              │             │                  │             │
+│       │         WebSocket (JSON metadata stream)      │             │
+└───────┼──────────────┼─────────────┼──────────────────┼─────────────┘
+        │              │             │                  │
+   Frame blob     ┌────┴─────────────┴──────────────────┴───┐
+        │         │          FastAPI Gateway (server.py)      │
+        └────────►│                                           │
+                  └───────────────────┬───────────────────────┘
+                                      │
+                  ┌───────────────────▼───────────────────────┐
+                  │           ZenithBrain (zenith_brain.py)    │
+                  │                                           │
+                  │  ┌─────────────┐    ┌──────────────────┐  │
+                  │  │  MediaPipe   │    │  Biomechanical   │  │
+                  │  │  33 landmarks│───►│  Feature Engine   │  │
+                  │  └──────┬──────┘    │  (30 features)   │  │
+                  │         │           └────────┬─────────┘  │
+                  │         │                    │             │
+                  │  ┌──────▼──────┐    ┌───────▼──────────┐  │
+                  │  │ Random Forest│    │  Quality Scoring  │  │
+                  │  │ (pose label) │    │  (pose profiles + │  │
+                  │  └─────────────┘    │   VAE + deviations)│  │
+                  │                     └──────────────────┘  │
+                  │  ┌─────────────┐    ┌──────────────────┐  │
+                  │  │  VAE Ghost   │    │  Bio Flow Score   │  │
+                  │  │ (ideal form) │    │ (angular velocity)│  │
+                  │  └─────────────┘    └──────────────────┘  │
+                  └───────────────────────────────────────────┘
+                                      │
+                  ┌───────────────────▼───────────────────────┐
+                  │        Gemini Vision Coach (optional)      │
+                  │     Context-aware verbal coaching cues      │
+                  └───────────────────────────────────────────┘
 ```
 
----
+### Processing Pipeline
 
-## Core Components
-
-### VAE Quality Scoring
-A Variational Autoencoder trained on correctly-executed pose sequences learns a latent distribution of proper form. Reconstruction error against this learned manifold produces a continuous 0--100 quality score, enabling nuanced feedback beyond binary correct/incorrect classification.
-
-### MediaPipe Pose Estimation
-Google's MediaPipe extracts 33 three-dimensional skeletal landmarks from each video frame, providing the spatial data that drives all downstream analysis.
-
-### Random Forest Classification
-A Random Forest classifier trained on extracted pose features identifies the current pose from 10 supported asanas with high confidence, enabling pose-specific feedback and angle thresholds.
-
-### Joint Angle Analysis
-Eight biomechanical joint angles (bilateral shoulders, elbows, hips, knees) are computed in real time from landmark coordinates, providing interpretable kinematic data for both the coaching system and the practitioner.
-
-### Gemini Coaching Module
-Google's Gemini API generates context-aware verbal coaching cues based on the identified pose, quality score, and joint angle deviations, translating quantitative assessment into actionable guidance.
+1. **Webcam capture** → JPEG frames at 30fps via `getUserMedia`
+2. **WebSocket transport** → binary frame blobs to FastAPI server
+3. **MediaPipe Pose** → 33 3D skeletal landmarks per frame
+4. **Dual feature paths** (parallel, for ablation comparison):
+   - **RAW:** Flatten 33×4 landmarks → 132-dim vector → Random Forest classifier
+   - **BIO:** 30 biomechanical features → pose-specific quality scoring → deviation detection
+5. **VAE quality** → reconstruction error against learned correct-form manifold
+6. **Bio flow** → angular velocity-based movement quality (Butterworth-filtered jerk)
+7. **JSON response** → label, quality, deviations, ghost skeleton, flow → frontend HUD
 
 ---
 
-## Results
+## Biomechanical Features (30 dimensions)
 
-The pose classifier achieved **99%+ accuracy** on the held-out test set. The confusion matrix below shows near-perfect classification across all 10 yoga poses.
+The core intellectual contribution: expert-designed features replacing raw landmarks.
 
-![Pose Classifier Confusion Matrix](docs/Pose_Classifier_Confusion_Matrix_10_Poses.png)
+| Category | Count | Features |
+|----------|-------|----------|
+| Joint Angles | 16 | Bilateral shoulder flexion/abduction, elbow flexion, hip flexion/abduction, knee flexion, ankle dorsiflexion, spinal lateral flexion, trunk forward lean |
+| Segment Ratios | 6 | Torso-leg ratio, arm span symmetry, stance width, shoulder-hip alignment, CoM over BoS, head-spine alignment |
+| Symmetry Metrics | 4 | Bilateral comparison: shoulder, elbow, hip, knee |
+| Stability Indicators | 4 | Velocity variance, CoM oscillation, BoS area, weight distribution |
 
-**Application Screenshots:**
+Each of the 10 poses has a **pose-specific quality profile** defining which features are critical and their ideal ranges, calibrated from correct-form video distributions and expert biomechanical knowledge.
 
-| Correct Warrior II | Correct Crescent Lunge |
-| :---: | :---: |
-| ![Correct Warrior Pose Demo](docs/warrior_correct.png) | ![Correct Crescent Pose Demo](docs/crescent_correct.png) |
+See [`ANNOTATION_PROTOCOL.md`](ANNOTATION_PROTOCOL.md) for the full feature taxonomy.
+
+---
+
+## Evaluation Results
+
+### Ablation Study: Feature Representation Comparison
+
+Stratified 5-fold cross-validation, 4,587 frames, 10 pose classes:
+
+| Condition | Dimensions | Random Forest Acc (95% CI) | MLP Acc (95% CI) |
+|-----------|-----------|---------------------------|-------------------|
+| RAW (landmarks) | 132 | 100.0% [1.00, 1.00] | 99.61% ± 0.21% |
+| **BIO (biomechanical)** | **30** | **100.0% [1.00, 1.00]** | **99.74% ± 0.09%** |
+| RAW+BIO | 162 | 100.0% [1.00, 1.00] | 99.74% ± 0.09% |
+| BIO+TEMPORAL | 150 | 100.0% [1.00, 1.00] | 99.74% ± 0.09% |
+
+**Key finding:** 30 biomechanical features achieve equivalent classification accuracy to 132 raw landmarks (**4.4x dimensionality reduction**) while enabling interpretable quality feedback.
+
+### Quality Score Validation
+
+| Metric | Value |
+|--------|-------|
+| Spearman rank correlation (ρ) with expert ratings | **0.958** (p < 10⁻⁵³) |
+| Pearson correlation | 0.931 |
+| ROC-AUC (correct vs. incorrect) | 0.766 |
+| Cohen's d (effect size) | 0.611 |
+| Mann-Whitney U (p-value) | 1838 (p < 10⁻⁵) |
+
+### VAE Quality Discrimination
+
+Trained on correct-form biomechanical features only:
+
+| Model | Correct MSE | Incorrect MSE | Ratio |
+|-------|-------------|---------------|-------|
+| Standard Bio-VAE (30→8 latent) | 0.000510 | 0.005021 | 9.84× |
+| Conditional VAE (pose-conditioned) | 0.000467 | 0.004822 | 10.33× |
+
+### Real-Time Performance
+
+| Component | Mean Latency | Achievable FPS |
+|-----------|-------------|----------------|
+| Bio feature extraction | 0.32 ms | 3,119 |
+| Quality scoring | 0.001 ms | 692,806 |
+| Full bio pipeline | 0.29 ms | 3,493 |
+| 30fps frame budget | 33.3 ms | — |
+
+Full pipeline uses **0.9% of the 30fps frame budget**.
+
+### Figures
+
+Generated evaluation figures in `evaluation/results/figures/`:
+- `fig_ablation_results.png` — Accuracy comparison across conditions and classifiers
+- `fig_confusion_matrix.png` — 10-class confusion matrix (BIO + Random Forest)
+- `fig_quality_discrimination.png` — Quality score distributions (correct vs. incorrect)
+- `fig_quality_scatter.png` — Quality score vs. expert rating scatter
+- `fig_tsne_comparison.png` — t-SNE embedding comparison (RAW vs. BIO)
+- `fig_latency.png` — Per-component latency breakdown
+
+---
+
+## Dataset
+
+98 video recordings of 10 yoga poses, each with raw video, extracted MediaPipe keypoints, and expert biomechanical annotations. See [`DATASET_CARD.md`](DATASET_CARD.md) for full documentation following Gebru et al. (2021).
+
+| Pose | Sanskrit | Correct | Incorrect | Total |
+|------|----------|---------|-----------|-------|
+| Chair | Utkatasana | 5 | 4 | 9 |
+| Crescent Lunge | Anjaneyasana | 5 | 5 | 10 |
+| Downward Dog | Adho Mukha Svanasana | 5 | 5 | 10 |
+| Extended Side Angle | Utthita Parsvakonasana | 5 | 5 | 10 |
+| High Lunge | Ashta Chandrasana | 5 | 5 | 10 |
+| Mountain Pose | Tadasana | 5 | 5 | 10 |
+| Plank | Kumbhakasana | 5 | 5 | 10 |
+| Tree | Vrksasana | 5 | 5 | 10 |
+| Triangle | Trikonasana | 5 | 5 | 10 |
+| Warrior II | Virabhadrasana II | 5 | 4 | 9 |
 
 ---
 
 ## Research Questions
 
-1. **How can biomechanical expertise be computationally encoded for real-time feedback?** The system operationalizes kinesiology knowledge through joint angle thresholds and a VAE-learned quality manifold, testing whether domain expertise transfers effectively into algorithmic form.
+1. **How can biomechanical expertise be computationally encoded for real-time feedback?** The system operationalizes kinesiology knowledge through 30 expert-designed biomechanical features and pose-specific quality profiles, testing whether domain expertise transfers effectively into algorithmic form.
 
-2. **What role does AI-generated coaching play in embodied skill acquisition?** By coupling pose detection with natural language coaching via Gemini, the project examines whether AI-mediated feedback can meaningfully support motor learning in unstructured home practice environments.
+2. **Do expert-designed features match raw landmarks for classification while enabling quality assessment?** The ablation study demonstrates equivalent accuracy with 4.4x fewer dimensions, while the biomechanical representation additionally supports interpretable quality scoring.
 
-3. **How should movement quality be modeled beyond binary classification?** The VAE's continuous quality score challenges the pass/fail paradigm common in pose estimation research, exploring whether gradient feedback better reflects the continuous nature of movement proficiency.
+3. **How should movement quality be modeled beyond binary classification?** The VAE's continuous quality score and pose-specific deviation detection challenge the pass/fail paradigm common in pose estimation research, correlating strongly (ρ = 0.958) with expert ratings.
 
 ---
 
-## Future Directions
+## Project Structure
 
-- **Body-type adaptation:** Investigating how morphological variation affects pose estimation accuracy and quality scoring, with the goal of personalized biomechanical baselines.
-- **Clinical rehabilitation applications:** Extending the pipeline to physical therapy contexts where real-time movement feedback could support recovery protocols.
-- **Algorithmic bias in pose assessment:** Examining how training data composition and skeletal model assumptions may systematically disadvantage certain body types, and developing mitigation strategies.
+```
+zenith-mvp/
+├── server.py                    # FastAPI WebSocket gateway
+├── zenith_brain.py              # Core ML pipeline (MediaPipe + RF + VAE + Bio)
+├── biomechanical_features.py    # 30 expert-designed features + pose profiles
+├── vae_biomechanical.py         # Bio-VAE and c-VAE training
+├── pose_foundations.py          # Geometric primitives and heuristics
+├── train_pose_classifier.py     # Random Forest training
+│
+├── ZENith_Data/
+│   ├── videos/                  # Raw .mov recordings
+│   ├── keypoints/               # Extracted .npy files (frames × 33 × 4)
+│   ├── annotations/             # Per-video JSON annotations
+│   │   └── generate_annotations.py
+│   └── models/                  # Trained model weights
+│       ├── pose_classifier.pkl
+│       ├── bio_encoder.weights.h5
+│       ├── bio_decoder.weights.h5
+│       ├── cvae_encoder.weights.h5
+│       └── cvae_decoder.weights.h5
+│
+├── evaluation/
+│   ├── train_and_evaluate.py    # Ablation study (4 conditions × 2 classifiers)
+│   ├── quality_validation.py    # Quality score vs. expert rating validation
+│   ├── generate_figures.py      # Publication-ready figures
+│   ├── benchmark_latency.py     # Real-time feasibility confirmation
+│   └── results/
+│       ├── ablation_results.json
+│       ├── quality_validation.json
+│       ├── latency_benchmark.json
+│       ├── per_class_metrics.json
+│       ├── confusion_matrices/
+│       └── figures/             # 6 publication-ready PNG figures
+│
+├── zenith-web/                  # React 19 frontend (Vite + TypeScript + Tailwind)
+│   └── src/
+│       ├── App.tsx
+│       ├── components/
+│       │   ├── BiomechanicalPanel.tsx  # Real-time bio quality display
+│       │   ├── VideoStage.tsx
+│       │   ├── HUD.tsx
+│       │   ├── GhostOverlay.tsx
+│       │   └── ...
+│       └── hooks/
+│           └── useZenithConnection.ts  # WebSocket state management
+│
+├── DATASET_CARD.md              # Gebru et al. dataset documentation
+├── ANNOTATION_PROTOCOL.md       # Quality rating criteria and feature taxonomy
+└── README.md                    # This file
+```
 
 ---
 
@@ -98,10 +240,11 @@ The pose classifier achieved **99%+ accuracy** on the held-out test set. The con
 
 | Component | Technology |
 |-----------|------------|
-| Pose estimation | MediaPipe |
-| Quality scoring | TensorFlow / Keras (VAE) |
-| Classification | scikit-learn (Random Forest) |
-| Frontend | React 19 / Vite / TypeScript |
+| Pose estimation | MediaPipe Pose (33 landmarks) |
+| Biomechanical features | NumPy, SciPy (Butterworth filter) |
+| Quality scoring | TensorFlow / Keras (VAE, c-VAE) |
+| Classification | scikit-learn (Random Forest, MLP) |
+| Frontend | React 19 / Vite / TypeScript / Tailwind |
 | Backend | FastAPI / Uvicorn / WebSocket |
 | Coaching | Google Gemini API |
 | Language | Python 3.10+ |
@@ -109,17 +252,44 @@ The pose classifier achieved **99%+ accuracy** on the held-out test set. The con
 ### Reproduction
 
 ```bash
+# Clone and setup
 git clone https://github.com/aperry938/zenith-mvp
 cd zenith-mvp
 conda create --name zenith python=3.11 -y
 conda activate zenith
 pip install -r requirements.txt
+
+# Run the live application
 python server.py
 # In a second terminal:
-cd zenith-web && npm run dev
+cd zenith-web && npm install && npm run dev
+
+# Run evaluation suite
+cd evaluation
+python train_and_evaluate.py    # Ablation study (~2 min)
+python quality_validation.py    # Quality score validation (~1 min)
+python generate_figures.py      # Publication figures
+python benchmark_latency.py     # Latency benchmarks
+
+# Retrain VAE on biomechanical features
+python vae_biomechanical.py     # Trains standard + conditional VAE
+
+# Generate dataset annotations
+cd ZENith_Data/annotations
+python generate_annotations.py
 ```
 
 Model training notebook: [Google Colab](https://colab.research.google.com/drive/1DSYxlitGTFTivI2nsCgHxrPoP5nJK-5Y)
+
+---
+
+## Future Directions
+
+- **Profile calibration:** Refine Extended Side Angle and High Lunge pose profiles (currently show poor correct/incorrect discrimination)
+- **Body-type adaptation:** Investigating how morphological variation affects quality scoring, with the goal of personalized biomechanical baselines
+- **Velocity-based phase detection:** Replace fixed temporal proportions with angular velocity thresholds for entry/hold/exit segmentation
+- **Multi-person tracking:** Extend to group yoga classes with per-person quality feedback
+- **Clinical rehabilitation:** Adapting the pipeline to physical therapy contexts
 
 ---
 

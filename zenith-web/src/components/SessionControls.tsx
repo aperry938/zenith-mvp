@@ -1,4 +1,5 @@
 import React from 'react';
+import { InfoTooltip } from './InfoTooltip';
 
 interface SessionControlsProps {
     isRecording: boolean;
@@ -16,7 +17,7 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
     onEndSession
 }) => {
     return (
-        <div className="absolute top-5 left-5 flex flex-col gap-3 pointer-events-auto z-40">
+        <div className="absolute bottom-5 left-5 flex flex-col gap-3 pointer-events-auto z-40">
             {/* Record Button */}
             <button
                 onClick={onToggleRecord}
@@ -28,6 +29,9 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
             >
                 <div className={`w-3 h-3 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-current'}`} />
                 <span>{isRecording ? 'Recording' : 'Record Session'}</span>
+                {!isRecording && (
+                    <InfoTooltip text="Start recording a practice session. Tracks pose detection, flow scores, and stability metrics. End the session to generate a summary report." />
+                )}
             </button>
 
             {/* Harvest Button */}
@@ -41,15 +45,20 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
             >
                 <div className={`w-3 h-3 rounded-sm ${isHarvesting ? 'bg-orange-500 animate-pulse' : 'bg-current'}`} />
                 <span>{isHarvesting ? 'Harvesting' : 'Harvest Data'}</span>
+                {!isHarvesting && (
+                    <InfoTooltip text="Save labeled frames for model training. Captures video frames with detected pose labels and quality scores to expand the training dataset." />
+                )}
             </button>
 
-            {/* End Session Button */}
-            <button
-                onClick={onEndSession}
-                className="mt-4 flex items-center justify-center gap-2 px-4 py-2 rounded bg-red-600/20 border border-red-600/50 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-500 transition-all text-xs font-bold uppercase tracking-widest"
-            >
-                <span>End Session</span>
-            </button>
+            {/* End Session Button — only visible when recording */}
+            {isRecording && (
+                <button
+                    onClick={onEndSession}
+                    className="mt-2 flex items-center justify-center gap-2 px-4 py-2 rounded bg-red-600/20 border border-red-600/50 text-red-400 hover:bg-red-600 hover:text-white hover:border-red-500 transition-all text-xs font-bold uppercase tracking-widest"
+                >
+                    <span>End Session</span>
+                </button>
+            )}
         </div>
     );
 };

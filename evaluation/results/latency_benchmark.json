@@ -1,0 +1,62 @@
+{
+  "raw_flatten": {
+    "mean_ms": 0.0005,
+    "std_ms": 0.0,
+    "p50_ms": 0.0005,
+    "p95_ms": 0.0005,
+    "p99_ms": 0.0005,
+    "min_ms": 0.0004,
+    "max_ms": 0.0007,
+    "fps_achievable": 2156709.5
+  },
+  "bio_extraction": {
+    "mean_ms": 0.3206,
+    "std_ms": 0.1162,
+    "p50_ms": 0.2835,
+    "p95_ms": 0.4902,
+    "p99_ms": 0.912,
+    "min_ms": 0.2785,
+    "max_ms": 1.4282,
+    "fps_achievable": 3119.4
+  },
+  "quality_score": {
+    "mean_ms": 0.0014,
+    "std_ms": 0.0,
+    "p50_ms": 0.0014,
+    "p95_ms": 0.0015,
+    "p99_ms": 0.0016,
+    "min_ms": 0.0013,
+    "max_ms": 0.0017,
+    "fps_achievable": 692806.2
+  },
+  "deviation_detection": {
+    "mean_ms": 0.0015,
+    "std_ms": 0.003,
+    "p50_ms": 0.0013,
+    "p95_ms": 0.0033,
+    "p99_ms": 0.0036,
+    "min_ms": 0.0012,
+    "max_ms": 0.0797,
+    "fps_achievable": 649221.7
+  },
+  "rf_raw": {
+    "mean_ms": 1.3918,
+    "std_ms": 0.3752,
+    "p50_ms": 1.2776,
+    "p95_ms": 1.9217,
+    "p99_ms": 3.0963,
+    "min_ms": 1.243,
+    "max_ms": 5.4139,
+    "fps_achievable": 718.5
+  },
+  "full_pipeline": {
+    "mean_ms": 0.2863,
+    "std_ms": 0.0198,
+    "p50_ms": 0.2847,
+    "p95_ms": 0.2891,
+    "p99_ms": 0.2974,
+    "min_ms": 0.2803,
+    "max_ms": 0.6057,
+    "fps_achievable": 3492.8
+  }
+}

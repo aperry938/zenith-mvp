@@ -11,6 +11,10 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from collections import deque, Counter
 import mediapipe as mp
+from biomechanical_features import (
+    extract_biomechanical_features, StabilityTracker,
+    compute_pose_quality_score, get_deviations, LABEL_TO_PROFILE
+)
 
 # TF Config
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -36,13 +40,16 @@ class ZenithBrain:
         self.load_vae()
         self.init_mediapipe()
         
-        # --- STATE for The Pulse (Flow) ---
+        # --- FLOW STATE ---
         self.prev_landmarks_array = None
         self.prev_velocity = 0.0
         self.current_flow_score = 100.0
         self.prev_time = 0.0
         # Smoothing Buffer
-        self.flow_buffer = deque(maxlen=7) 
+        self.flow_buffer = deque(maxlen=7)
+
+        # --- BIOMECHANICAL FEATURES ---
+        self.stability_tracker = StabilityTracker(buffer_size=15)
         
         # --- WORKER ---
         self.thread = threading.Thread(target=self._worker_loop, daemon=True)
@@ -99,6 +106,12 @@ class ZenithBrain:
     def landmarks_to_flat(self, lms):
         arr = np.array([[lm.x,lm.y,lm.z,lm.visibility] for lm in lms.landmark], dtype=np.float32)
         return arr.flatten()[None,:]
+
+    def landmarks_to_biomechanical(self, lms):
+        """Extract 30 biomechanical features from MediaPipe landmarks.
+        Returns (1, 30) float32 array suitable for classification."""
+        bio_feats = extract_biomechanical_features(lms, self.stability_tracker)
+        return bio_feats[None, :].astype(np.float32)
     
     def calculate_flow(self, curr_flat, prev_flat, dt, prev_v):
         if prev_flat is None or dt <= 0: return 100.0, 0.0
@@ -107,9 +120,26 @@ class ZenithBrain:
         velocity = dist / dt
         acceleration = abs(velocity - prev_v) / dt
         # Punishment factor
-        punishment = acceleration * 15.0 
+        punishment = acceleration * 15.0
         score = 100.0 - punishment
         return float(np.clip(score, 0, 100)), velocity
+
+    def calculate_bio_flow(self, curr_bio, prev_bio, dt):
+        """Calculate flow from biomechanical feature angular velocities.
+        More meaningful than raw landmark displacement — measures joint
+        angular change rate rather than pixel movement."""
+        if prev_bio is None or dt <= 0:
+            return 100.0
+        # Angular velocity: rate of change of joint angles (first 16 features)
+        angle_diff = np.abs(curr_bio[0, :16] - prev_bio[0, :16])
+        # Denormalize to degrees/sec
+        angular_velocity = (angle_diff * 180.0) / dt
+        # Jerk proxy: high angular velocity = jerky
+        mean_angular_vel = float(np.mean(angular_velocity))
+        # Score: smooth motion has low angular velocity
+        # Normalize: 0°/s = perfect stillness (100), 50°/s = moderate (50), 100°/s = jerky (0)
+        score = 100.0 - np.clip(mean_angular_vel, 0, 100)
+        return float(score)
 
     def _worker_loop(self):
         POSE_NAMES = ["Chair","Downward Dog","Extended Side Angle","High Lunge","Mountain Pose","Plank","Tree","Triangle","Warrior II"]
@@ -127,7 +157,10 @@ class ZenithBrain:
                 'vae_q': None,
                 'vae_recon': None,
                 'flow_score': self.current_flow_score, # Return last known if fail
-                'velocity': self.prev_velocity
+                'velocity': self.prev_velocity,
+                'bio_features': None,
+                'bio_quality': None,
+                'bio_deviations': None,
             }
             
             try:
@@ -140,12 +173,30 @@ class ZenithBrain:
 
                 if res.pose_landmarks:
                     feats = self.landmarks_to_flat(res.pose_landmarks)
-                    
-                    # 2. Classifier
+
+                    # 2. Classifier (with confidence threshold)
                     if self.clf_ok:
-                        pred = self.pose_classifier.predict(feats)
-                        result['label'] = INT_TO_POSE.get(int(pred[0]), "Unknown")
-                        
+                        proba = self.pose_classifier.predict_proba(feats)
+                        max_conf = float(np.max(proba))
+                        pred_idx = int(np.argmax(proba))
+                        if max_conf >= 0.6:  # Only label if >= 60% confident
+                            result['label'] = INT_TO_POSE.get(pred_idx, "Unknown")
+                            result['confidence'] = max_conf
+                        else:
+                            result['label'] = None  # Not a recognized pose
+
+                    # 2b. Biomechanical features (parallel path)
+                    bio_feats = self.landmarks_to_biomechanical(res.pose_landmarks)
+                    result['bio_features'] = bio_feats
+                    if result['label'] and result['label'] in LABEL_TO_PROFILE:
+                        profile_key = LABEL_TO_PROFILE[result['label']]
+                        result['bio_quality'] = compute_pose_quality_score(
+                            bio_feats[0], profile_key
+                        )
+                        result['bio_deviations'] = get_deviations(
+                            bio_feats[0], profile_key
+                        )
+
                     # 3. VAE Quality
                     if self.vae_ok:
                          z_mean, _, z = self.encoder.predict(feats, verbose=0)
@@ -155,7 +206,7 @@ class ZenithBrain:
                          result['vae_q'] = float(np.clip(q, 0, 100))
                          result['vae_recon'] = recon
                     
-                    # 4. Flow Calculation (The Pulse)
+                    # 4. Flow Calculation
                     if self.prev_landmarks_array is not None and dt > 0:
                         raw_score, velocity = self.calculate_flow(feats, self.prev_landmarks_array, dt, self.prev_velocity)
                         

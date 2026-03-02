@@ -1,0 +1,202 @@
+{
+  "quality_rating": 5,
+  "quality_label": "excellent",
+  "quality_score": 100.0,
+  "quality_std": 0.0,
+  "pose_label": "Triangle",
+  "n_frames": 482,
+  "deviations": [],
+  "persistent_deviations": [],
+  "pose_phases": {
+    "entry_frames": 19,
+    "hold_frames": 408,
+    "exit_frames": 16,
+    "transition_frames": 39
+  },
+  "feature_statistics": {
+    "l_shoulder_flexion": {
+      "mean": 0.5018,
+      "std": 0.0085,
+      "min": 0.4882,
+      "max": 0.5216
+    },
+    "r_shoulder_flexion": {
+      "mean": 0.7378,
+      "std": 0.0104,
+      "min": 0.718,
+      "max": 0.7744
+    },
+    "l_shoulder_abduction": {
+      "mean": 0.5231,
+      "std": 0.0099,
+      "min": 0.508,
+      "max": 0.5484
+    },
+    "r_shoulder_abduction": {
+      "mean": 0.7429,
+      "std": 0.0055,
+      "min": 0.7325,
+      "max": 0.7548
+    },
+    "l_elbow_flexion": {
+      "mean": 0.9546,
+      "std": 0.0046,
+      "min": 0.9418,
+      "max": 0.9645
+    },
+    "r_elbow_flexion": {
+      "mean": 0.9865,
+      "std": 0.0085,
+      "min": 0.9448,
+      "max": 1.0
+    },
+    "l_hip_flexion": {
+      "mean": 0.3714,
+      "std": 0.0102,
+      "min": 0.345,
+      "max": 0.39
+    },
+    "r_hip_flexion": {
+      "mean": 0.8777,
+      "std": 0.0033,
+      "min": 0.8727,
+      "max": 0.8843
+    },
+    "l_hip_abduction": {
+      "mean": 0.7923,
+      "std": 0.009,
+      "min": 0.7686,
+      "max": 0.8083
+    },
+    "r_hip_abduction": {
+      "mean": 0.4449,
+      "std": 0.0076,
+      "min": 0.4306,
+      "max": 0.4611
+    },
+    "l_knee_flexion": {
+      "mean": 0.9943,
+      "std": 0.0038,
+      "min": 0.9797,
+      "max": 1.0
+    },
+    "r_knee_flexion": {
+      "mean": 0.9773,
+      "std": 0.003,
+      "min": 0.9731,
+      "max": 0.9861
+    },
+    "l_ankle_dorsiflexion": {
+      "mean": 0.8311,
+      "std": 0.0251,
+      "min": 0.7899,
+      "max": 0.9106
+    },
+    "r_ankle_dorsiflexion": {
+      "mean": 0.9239,
+      "std": 0.006,
+      "min": 0.913,
+      "max": 0.9362
+    },
+    "spinal_lateral_flexion": {
+      "mean": 0.314,
+      "std": 0.004,
+      "min": 0.3066,
+      "max": 0.3229
+    },
+    "trunk_forward_lean": {
+      "mean": 0.4499,
+      "std": 0.0021,
+      "min": 0.4451,
+      "max": 0.4537
+    },
+    "torso_leg_ratio": {
+      "mean": 0.1903,
+      "std": 0.0034,
+      "min": 0.1843,
+      "max": 0.1995
+    },
+    "arm_span_symmetry": {
+      "mean": 0.9832,
+      "std": 0.0108,
+      "min": 0.9628,
+      "max": 0.9998
+    },
+    "stance_width_ratio": {
+      "mean": 0.7722,
+      "std": 0.0105,
+      "min": 0.7499,
+      "max": 0.7965
+    },
+    "shoulder_hip_offset": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "com_base_displacement": {
+      "mean": 0.9257,
+      "std": 0.0291,
+      "min": 0.8591,
+      "max": 0.9781
+    },
+    "head_spine_alignment": {
+      "mean": 0.6128,
+      "std": 0.0271,
+      "min": 0.5657,
+      "max": 0.6749
+    },
+    "shoulder_angle_symmetry": {
+      "mean": 0.7721,
+      "std": 0.0104,
+      "min": 0.7461,
+      "max": 0.7945
+    },
+    "elbow_angle_symmetry": {
+      "mean": 0.9679,
+      "std": 0.0101,
+      "min": 0.9464,
+      "max": 0.9956
+    },
+    "hip_angle_symmetry": {
+      "mean": 0.5731,
+      "std": 0.0084,
+      "min": 0.5522,
+      "max": 0.5967
+    },
+    "knee_angle_symmetry": {
+      "mean": 0.983,
+      "std": 0.0051,
+      "min": 0.9747,
+      "max": 0.9984
+    },
+    "landmark_velocity_var": {
+      "mean": 0.999,
+      "std": 0.0005,
+      "min": 0.9982,
+      "max": 0.9998
+    },
+    "com_oscillation": {
+      "mean": 0.9833,
+      "std": 0.0069,
+      "min": 0.966,
+      "max": 0.9958
+    },
+    "base_of_support_area": {
+      "mean": 0.1361,
+      "std": 0.0111,
+      "min": 0.1176,
+      "max": 0.1766
+    },
+    "weight_distribution": {
+      "mean": 0.9765,
+      "std": 0.0096,
+      "min": 0.954,
+      "max": 0.9933
+    }
+  },
+  "source_file": "Triangle_Correct_2.npy",
+  "annotator": "biomechanical_analysis",
+  "annotator_credentials": "M.S. Kinesiology, 500hr RYT, M.S. CS/AI",
+  "ground_truth_label": "correct"
+}

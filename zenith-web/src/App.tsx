@@ -1,13 +1,11 @@
-import { useEffect } from 'react';
 import { VideoStage } from './components/VideoStage';
 import { HUD } from './components/HUD';
 import { GhostOverlay } from './components/GhostOverlay';
 import { SessionControls } from './components/SessionControls';
 import { GenerativeCoach } from './components/GenerativeCoach';
-import { SequenceDisplay } from './components/SequenceDisplay';
 import { SessionReport } from './components/SessionReport';
+import { BiomechanicalPanel } from './components/BiomechanicalPanel';
 import { useZenithConnection } from './hooks/useZenithConnection';
-import { useZenithVoice } from './hooks/useZenithVoice';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function ZenithApp() {
@@ -20,10 +18,7 @@ function ZenithApp() {
     ghost,
     isRecording,
     isHarvesting,
-    sequenceState,
-    voiceMessage,
     sessionReport,
-    clearVoiceMessage,
     clearSessionReport,
     sendFrame,
     requestAnalysis,
@@ -32,23 +27,12 @@ function ZenithApp() {
     endSession
   } = useZenithConnection();
 
-  // TTS Engine
-  const { speak } = useZenithVoice();
-
-  // Handle Incoming Voice Messages from Sequencer
-  useEffect(() => {
-    if (voiceMessage) {
-      speak(voiceMessage);
-      clearVoiceMessage();
-    }
-  }, [voiceMessage, speak, clearVoiceMessage]);
-
   return (
     <div className="w-screen h-screen flex flex-col bg-zenith-bg text-gray-100 overflow-hidden">
       {/* Header */}
-      <header className="h-16 border-b border-zinc-800 flex justify-between items-center px-8 bg-zenith-panel z-10 relative">
+      <header className="h-16 border-b border-zinc-800 flex justify-between items-center px-8 bg-zenith-panel z-40 relative">
         <div className="font-bold text-2xl tracking-widest text-white uppercase">
-          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.2 (Reflection)</span>
+          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.2</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -69,16 +53,19 @@ function ZenithApp() {
 
       {/* Main Stage */}
       <main className="flex-1 flex justify-center items-center relative bg-[radial-gradient(circle_at_center,#111_0%,#000_100%)]">
-        {/* Layer 0: Video */}
-        <VideoStage onFrame={sendFrame} />
+        {/* Layer 0+1: Video + Skeleton in shared coordinate space */}
+        <div className="relative" style={{ transform: 'scaleX(-1)' }}>
+          <VideoStage onFrame={sendFrame} />
+          <GhostOverlay landmarks={landmarks} ghostFlat={ghost} />
+        </div>
 
-        {/* Layer 1: The Mirage (Ghost/Skeleton) */}
-        <GhostOverlay landmarks={landmarks} ghostFlat={ghost} />
-
-        {/* Layer 2: Sequence Guidance (Teacher) */}
-        <SequenceDisplay state={sequenceState} />
-
-        {/* Layer 3: UI Overlays */}
+        {/* Layer 2: UI Overlays */}
+        <BiomechanicalPanel
+          bioQuality={metrics?.bio_quality}
+          bioDeviations={metrics?.bio_deviations}
+          bioFeatures={metrics?.bio_features}
+          poseLabel={metrics?.label}
+        />
         <HUD metrics={metrics} advice={advice} onRequestAnalysis={requestAnalysis} />
 
         <SessionControls
@@ -89,16 +76,16 @@ function ZenithApp() {
           onEndSession={endSession}
         />
 
-        {/* Layer 4: The Generator (AI Coach Avatar) */}
+        {/* AI Coach Avatar */}
         <GenerativeCoach />
 
-        {/* Layer 5: The Reflection (Report Overlay) */}
+        {/* Session Report Overlay */}
         <SessionReport stats={sessionReport} onClose={clearSessionReport} />
       </main>
 
       {/* Footer */}
-      <footer className="h-10 border-t border-zinc-800 flex justify-center items-center text-xs text-zinc-600 bg-zenith-panel z-10 relative">
-        <p>Cycle 41: The Reflection</p>
+      <footer className="h-10 border-t border-zinc-800 flex justify-center items-center text-xs text-zinc-600 bg-zenith-panel z-40 relative">
+        <p>ZENith v2.2 — Real-Time Biomechanical Movement Analysis</p>
       </footer>
     </div>
   );

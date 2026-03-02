@@ -67,3 +67,10 @@ Thumbs.db
 htmlcov/
 .mypy_cache/
 .DS_Store
+
+# Large data files (not tracked)
+ZENith_Data/videos/
+ZENith_Data/keypoints/
+
+# Local-only assets (not tracked)
+local-assets/

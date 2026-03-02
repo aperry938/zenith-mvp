@@ -1,0 +1,498 @@
+{
+  "RAW_Random Forest": {
+    "Chair": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 457
+    },
+    "Crescent Lunge": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 423
+    },
+    "Downward Dog": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 462
+    },
+    "Extended Side Angle": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 413
+    },
+    "High Lunge": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 429
+    },
+    "Mountain Pose": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 569
+    },
+    "Plank": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 418
+    },
+    "Tree": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 602
+    },
+    "Triangle": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 383
+    },
+    "Warrior II": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 431
+    }
+  },
+  "RAW_MLP": {
+    "Chair": {
+      "precision": 1.0,
+      "recall": 0.9891,
+      "f1": 0.9945,
+      "support": 457
+    },
+    "Crescent Lunge": {
+      "precision": 0.9636,
+      "recall": 1.0,
+      "f1": 0.9814,
+      "support": 423
+    },
+    "Downward Dog": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 462
+    },
+    "Extended Side Angle": {
+      "precision": 1.0,
+      "recall": 0.9709,
+      "f1": 0.9853,
+      "support": 413
+    },
+    "High Lunge": {
+      "precision": 1.0,
+      "recall": 0.9977,
+      "f1": 0.9988,
+      "support": 429
+    },
+    "Mountain Pose": {
+      "precision": 0.9965,
+      "recall": 1.0,
+      "f1": 0.9982,
+      "support": 569
+    },
+    "Plank": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 418
+    },
+    "Tree": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 602
+    },
+    "Triangle": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 383
+    },
+    "Warrior II": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 431
+    }
+  },
+  "BIO_Random Forest": {
+    "Chair": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 457
+    },
+    "Crescent Lunge": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 423
+    },
+    "Downward Dog": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 462
+    },
+    "Extended Side Angle": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 413
+    },
+    "High Lunge": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 429
+    },
+    "Mountain Pose": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 569
+    },
+    "Plank": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 418
+    },
+    "Tree": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 602
+    },
+    "Triangle": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 383
+    },
+    "Warrior II": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 431
+    }
+  },
+  "BIO_MLP": {
+    "Chair": {
+      "precision": 0.9913,
+      "recall": 1.0,
+      "f1": 0.9956,
+      "support": 457
+    },
+    "Crescent Lunge": {
+      "precision": 1.0,
+      "recall": 0.9905,
+      "f1": 0.9952,
+      "support": 423
+    },
+    "Downward Dog": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 462
+    },
+    "Extended Side Angle": {
+      "precision": 1.0,
+      "recall": 0.9806,
+      "f1": 0.9902,
+      "support": 413
+    },
+    "High Lunge": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 429
+    },
+    "Mountain Pose": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 569
+    },
+    "Plank": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 418
+    },
+    "Tree": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 602
+    },
+    "Triangle": {
+      "precision": 0.9974,
+      "recall": 1.0,
+      "f1": 0.9987,
+      "support": 383
+    },
+    "Warrior II": {
+      "precision": 0.984,
+      "recall": 1.0,
+      "f1": 0.9919,
+      "support": 431
+    }
+  },
+  "RAW+BIO_Random Forest": {
+    "Chair": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 457
+    },
+    "Crescent Lunge": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 423
+    },
+    "Downward Dog": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 462
+    },
+    "Extended Side Angle": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 413
+    },
+    "High Lunge": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 429
+    },
+    "Mountain Pose": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 569
+    },
+    "Plank": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 418
+    },
+    "Tree": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 602
+    },
+    "Triangle": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 383
+    },
+    "Warrior II": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 431
+    }
+  },
+  "RAW+BIO_MLP": {
+    "Chair": {
+      "precision": 0.9956,
+      "recall": 1.0,
+      "f1": 0.9978,
+      "support": 457
+    },
+    "Crescent Lunge": {
+      "precision": 0.9837,
+      "recall": 0.9976,
+      "f1": 0.9906,
+      "support": 423
+    },
+    "Downward Dog": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 462
+    },
+    "Extended Side Angle": {
+      "precision": 1.0,
+      "recall": 0.9758,
+      "f1": 0.9877,
+      "support": 413
+    },
+    "High Lunge": {
+      "precision": 0.9976,
+      "recall": 0.9837,
+      "f1": 0.9906,
+      "support": 429
+    },
+    "Mountain Pose": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 569
+    },
+    "Plank": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 418
+    },
+    "Tree": {
+      "precision": 0.9983,
+      "recall": 1.0,
+      "f1": 0.9992,
+      "support": 602
+    },
+    "Triangle": {
+      "precision": 0.9821,
+      "recall": 1.0,
+      "f1": 0.9909,
+      "support": 383
+    },
+    "Warrior II": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 431
+    }
+  },
+  "BIO+TEMPORAL_Random Forest": {
+    "Chair": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 457
+    },
+    "Crescent Lunge": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 423
+    },
+    "Downward Dog": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 462
+    },
+    "Extended Side Angle": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 413
+    },
+    "High Lunge": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 429
+    },
+    "Mountain Pose": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 569
+    },
+    "Plank": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 418
+    },
+    "Tree": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 602
+    },
+    "Triangle": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 383
+    },
+    "Warrior II": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 431
+    }
+  },
+  "BIO+TEMPORAL_MLP": {
+    "Chair": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 457
+    },
+    "Crescent Lunge": {
+      "precision": 1.0,
+      "recall": 0.9787,
+      "f1": 0.9892,
+      "support": 423
+    },
+    "Downward Dog": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 462
+    },
+    "Extended Side Angle": {
+      "precision": 1.0,
+      "recall": 0.9782,
+      "f1": 0.989,
+      "support": 413
+    },
+    "High Lunge": {
+      "precision": 0.9795,
+      "recall": 1.0,
+      "f1": 0.9896,
+      "support": 429
+    },
+    "Mountain Pose": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 569
+    },
+    "Plank": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 418
+    },
+    "Tree": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 602
+    },
+    "Triangle": {
+      "precision": 0.9871,
+      "recall": 1.0,
+      "f1": 0.9935,
+      "support": 383
+    },
+    "Warrior II": {
+      "precision": 0.9908,
+      "recall": 1.0,
+      "f1": 0.9954,
+      "support": 431
+    }
+  }
+}

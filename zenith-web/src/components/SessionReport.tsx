@@ -22,8 +22,8 @@ export const SessionReport: React.FC<SessionReportProps> = ({ stats, onClose }) 
 
                 {/* Header */}
                 <div className="flex flex-col items-center">
-                    <h2 className="text-3xl font-bold uppercase tracking-widest text-white mb-2">Namaste</h2>
-                    <p className="text-zinc-400 text-sm italic">"The light in me honors the light in you."</p>
+                    <h2 className="text-3xl font-bold uppercase tracking-widest text-white mb-2">Session Complete</h2>
+                    <p className="text-zinc-400 text-sm">Movement quality analysis summary</p>
                 </div>
 
                 <div className="w-full h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent" />
@@ -53,7 +53,7 @@ export const SessionReport: React.FC<SessionReportProps> = ({ stats, onClose }) 
                     onClick={onClose}
                     className="mt-4 px-8 py-3 bg-white text-black font-bold uppercase tracking-widest rounded-full hover:bg-zenith-cyan hover:shadow-[0_0_20px_rgba(0,255,255,0.4)] transition-all"
                 >
-                    Return to Reality
+                    Close Report
                 </button>
             </div>
         </div>

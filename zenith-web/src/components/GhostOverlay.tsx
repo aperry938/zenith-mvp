@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { drawSkeleton, flatToLandmarks, type Landmark } from '../utils/drawing';
+import { drawSkeleton, drawAngles, flatToLandmarks, type Landmark } from '../utils/drawing';
 
 interface GhostOverlayProps {
     landmarks: Landmark[] | null;
@@ -24,9 +24,10 @@ export const GhostOverlay: React.FC<GhostOverlayProps> = ({ landmarks, ghostFlat
             drawSkeleton(ctx, ghostLms, 'cyan', 640, 480);
         }
 
-        // Draw User (Red/Pink for visibility over video)
+        // Draw User skeleton + angle annotations
         if (landmarks && landmarks.length > 0) {
-            drawSkeleton(ctx, landmarks, '#ff0055', 640, 480);
+            drawSkeleton(ctx, landmarks, '#00ff99', 640, 480);
+            drawAngles(ctx, landmarks, 640, 480);
         }
 
     }, [landmarks, ghostFlat]);
@@ -36,7 +37,7 @@ export const GhostOverlay: React.FC<GhostOverlayProps> = ({ landmarks, ghostFlat
             ref={canvasRef}
             width={640}
             height={480}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[480px] pointer-events-none scale-x-[-1] opacity-70"
+            className="absolute inset-0 w-[640px] h-[480px] pointer-events-none z-10"
         />
     );
 };

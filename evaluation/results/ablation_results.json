@@ -1,0 +1,2070 @@
+{
+  "RAW": {
+    "condition": "RAW",
+    "n_samples": 4587,
+    "n_features": 132,
+    "classifiers": {
+      "Random Forest": {
+        "classifier": "Random Forest",
+        "accuracy_mean": 1.0,
+        "accuracy_std": 0.0,
+        "accuracy_ci95": [
+          1.0,
+          1.0
+        ],
+        "f1_macro_mean": 1.0,
+        "f1_macro_std": 0.0,
+        "f1_macro_ci95": [
+          1.0,
+          1.0
+        ],
+        "f1_weighted_mean": 1.0,
+        "f1_weighted_ci95": [
+          1.0,
+          1.0
+        ],
+        "per_fold": [
+          {
+            "fold": 1,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 2,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 3,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 4,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 5,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          }
+        ],
+        "per_class": {
+          "Chair": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 457
+          },
+          "Crescent Lunge": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 423
+          },
+          "Downward Dog": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 462
+          },
+          "Extended Side Angle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 413
+          },
+          "High Lunge": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 429
+          },
+          "Mountain Pose": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 569
+          },
+          "Plank": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 418
+          },
+          "Tree": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 602
+          },
+          "Triangle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 383
+          },
+          "Warrior II": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 431
+          }
+        },
+        "confusion_matrix": [
+          [
+            457,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            423,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            462,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            413,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            429,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            569,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            418,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            602,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            383,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            431
+          ]
+        ],
+        "class_names": [
+          "Chair",
+          "Crescent Lunge",
+          "Downward Dog",
+          "Extended Side Angle",
+          "High Lunge",
+          "Mountain Pose",
+          "Plank",
+          "Tree",
+          "Triangle",
+          "Warrior II"
+        ],
+        "latency": {
+          "mean_ms": 14.356,
+          "std_ms": 2.203,
+          "p50_ms": 13.975,
+          "p95_ms": 15.843,
+          "p99_ms": 16.793
+        }
+      },
+      "MLP": {
+        "classifier": "MLP",
+        "accuracy_mean": 0.9961,
+        "accuracy_std": 0.0021,
+        "accuracy_ci95": [
+          0.9931,
+          0.999
+        ],
+        "f1_macro_mean": 0.9958,
+        "f1_macro_std": 0.0023,
+        "f1_macro_ci95": [
+          0.9927,
+          0.999
+        ],
+        "f1_weighted_mean": 0.9961,
+        "f1_weighted_ci95": [
+          0.9931,
+          0.999
+        ],
+        "per_fold": [
+          {
+            "fold": 1,
+            "accuracy": 0.9924,
+            "f1_macro": 0.992,
+            "f1_weighted": 0.9924
+          },
+          {
+            "fold": 2,
+            "accuracy": 0.9967,
+            "f1_macro": 0.9964,
+            "f1_weighted": 0.9967
+          },
+          {
+            "fold": 3,
+            "accuracy": 0.9956,
+            "f1_macro": 0.9954,
+            "f1_weighted": 0.9956
+          },
+          {
+            "fold": 4,
+            "accuracy": 0.9967,
+            "f1_macro": 0.9964,
+            "f1_weighted": 0.9967
+          },
+          {
+            "fold": 5,
+            "accuracy": 0.9989,
+            "f1_macro": 0.999,
+            "f1_weighted": 0.9989
+          }
+        ],
+        "per_class": {
+          "Chair": {
+            "precision": 1.0,
+            "recall": 0.9891,
+            "f1": 0.9945,
+            "support": 457
+          },
+          "Crescent Lunge": {
+            "precision": 0.9636,
+            "recall": 1.0,
+            "f1": 0.9814,
+            "support": 423
+          },
+          "Downward Dog": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 462
+          },
+          "Extended Side Angle": {
+            "precision": 1.0,
+            "recall": 0.9709,
+            "f1": 0.9853,
+            "support": 413
+          },
+          "High Lunge": {
+            "precision": 1.0,
+            "recall": 0.9977,
+            "f1": 0.9988,
+            "support": 429
+          },
+          "Mountain Pose": {
+            "precision": 0.9965,
+            "recall": 1.0,
+            "f1": 0.9982,
+            "support": 569
+          },
+          "Plank": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 418
+          },
+          "Tree": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 602
+          },
+          "Triangle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 383
+          },
+          "Warrior II": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 431
+          }
+        },
+        "confusion_matrix": [
+          [
+            452,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            423,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            462,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            10,
+            0,
+            401,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            428,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            569,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            418,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            602,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            383,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            431
+          ]
+        ],
+        "class_names": [
+          "Chair",
+          "Crescent Lunge",
+          "Downward Dog",
+          "Extended Side Angle",
+          "High Lunge",
+          "Mountain Pose",
+          "Plank",
+          "Tree",
+          "Triangle",
+          "Warrior II"
+        ],
+        "latency": {
+          "mean_ms": 0.033,
+          "std_ms": 0.002,
+          "p50_ms": 0.032,
+          "p95_ms": 0.034,
+          "p99_ms": 0.041
+        }
+      }
+    }
+  },
+  "BIO": {
+    "condition": "BIO",
+    "n_samples": 4587,
+    "n_features": 30,
+    "classifiers": {
+      "Random Forest": {
+        "classifier": "Random Forest",
+        "accuracy_mean": 1.0,
+        "accuracy_std": 0.0,
+        "accuracy_ci95": [
+          1.0,
+          1.0
+        ],
+        "f1_macro_mean": 1.0,
+        "f1_macro_std": 0.0,
+        "f1_macro_ci95": [
+          1.0,
+          1.0
+        ],
+        "f1_weighted_mean": 1.0,
+        "f1_weighted_ci95": [
+          1.0,
+          1.0
+        ],
+        "per_fold": [
+          {
+            "fold": 1,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 2,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 3,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 4,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 5,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          }
+        ],
+        "per_class": {
+          "Chair": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 457
+          },
+          "Crescent Lunge": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 423
+          },
+          "Downward Dog": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 462
+          },
+          "Extended Side Angle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 413
+          },
+          "High Lunge": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 429
+          },
+          "Mountain Pose": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 569
+          },
+          "Plank": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 418
+          },
+          "Tree": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 602
+          },
+          "Triangle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 383
+          },
+          "Warrior II": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 431
+          }
+        },
+        "confusion_matrix": [
+          [
+            457,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            423,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            462,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            413,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            429,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            569,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            418,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            602,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            383,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            431
+          ]
+        ],
+        "class_names": [
+          "Chair",
+          "Crescent Lunge",
+          "Downward Dog",
+          "Extended Side Angle",
+          "High Lunge",
+          "Mountain Pose",
+          "Plank",
+          "Tree",
+          "Triangle",
+          "Warrior II"
+        ],
+        "latency": {
+          "mean_ms": 14.374,
+          "std_ms": 1.74,
+          "p50_ms": 14.177,
+          "p95_ms": 15.844,
+          "p99_ms": 17.112
+        }
+      },
+      "MLP": {
+        "classifier": "MLP",
+        "accuracy_mean": 0.9974,
+        "accuracy_std": 0.0009,
+        "accuracy_ci95": [
+          0.9961,
+          0.9986
+        ],
+        "f1_macro_mean": 0.9972,
+        "f1_macro_std": 0.0009,
+        "f1_macro_ci95": [
+          0.9959,
+          0.9985
+        ],
+        "f1_weighted_mean": 0.9974,
+        "f1_weighted_ci95": [
+          0.9961,
+          0.9986
+        ],
+        "per_fold": [
+          {
+            "fold": 1,
+            "accuracy": 0.9978,
+            "f1_macro": 0.9976,
+            "f1_weighted": 0.9978
+          },
+          {
+            "fold": 2,
+            "accuracy": 0.9956,
+            "f1_macro": 0.9953,
+            "f1_weighted": 0.9956
+          },
+          {
+            "fold": 3,
+            "accuracy": 0.9978,
+            "f1_macro": 0.9977,
+            "f1_weighted": 0.9978
+          },
+          {
+            "fold": 4,
+            "accuracy": 0.9978,
+            "f1_macro": 0.9976,
+            "f1_weighted": 0.9978
+          },
+          {
+            "fold": 5,
+            "accuracy": 0.9978,
+            "f1_macro": 0.9976,
+            "f1_weighted": 0.9978
+          }
+        ],
+        "per_class": {
+          "Chair": {
+            "precision": 0.9913,
+            "recall": 1.0,
+            "f1": 0.9956,
+            "support": 457
+          },
+          "Crescent Lunge": {
+            "precision": 1.0,
+            "recall": 0.9905,
+            "f1": 0.9952,
+            "support": 423
+          },
+          "Downward Dog": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 462
+          },
+          "Extended Side Angle": {
+            "precision": 1.0,
+            "recall": 0.9806,
+            "f1": 0.9902,
+            "support": 413
+          },
+          "High Lunge": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 429
+          },
+          "Mountain Pose": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 569
+          },
+          "Plank": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 418
+          },
+          "Tree": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 602
+          },
+          "Triangle": {
+            "precision": 0.9974,
+            "recall": 1.0,
+            "f1": 0.9987,
+            "support": 383
+          },
+          "Warrior II": {
+            "precision": 0.984,
+            "recall": 1.0,
+            "f1": 0.9919,
+            "support": 431
+          }
+        },
+        "confusion_matrix": [
+          [
+            457,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            419,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            462,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            405,
+            0,
+            0,
+            0,
+            0,
+            1,
+            7
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            429,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            569,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            418,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            602,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            383,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            431
+          ]
+        ],
+        "class_names": [
+          "Chair",
+          "Crescent Lunge",
+          "Downward Dog",
+          "Extended Side Angle",
+          "High Lunge",
+          "Mountain Pose",
+          "Plank",
+          "Tree",
+          "Triangle",
+          "Warrior II"
+        ],
+        "latency": {
+          "mean_ms": 0.032,
+          "std_ms": 0.001,
+          "p50_ms": 0.031,
+          "p95_ms": 0.033,
+          "p99_ms": 0.033
+        }
+      }
+    }
+  },
+  "RAW+BIO": {
+    "condition": "RAW+BIO",
+    "n_samples": 4587,
+    "n_features": 162,
+    "classifiers": {
+      "Random Forest": {
+        "classifier": "Random Forest",
+        "accuracy_mean": 1.0,
+        "accuracy_std": 0.0,
+        "accuracy_ci95": [
+          1.0,
+          1.0
+        ],
+        "f1_macro_mean": 1.0,
+        "f1_macro_std": 0.0,
+        "f1_macro_ci95": [
+          1.0,
+          1.0
+        ],
+        "f1_weighted_mean": 1.0,
+        "f1_weighted_ci95": [
+          1.0,
+          1.0
+        ],
+        "per_fold": [
+          {
+            "fold": 1,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 2,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 3,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 4,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 5,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          }
+        ],
+        "per_class": {
+          "Chair": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 457
+          },
+          "Crescent Lunge": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 423
+          },
+          "Downward Dog": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 462
+          },
+          "Extended Side Angle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 413
+          },
+          "High Lunge": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 429
+          },
+          "Mountain Pose": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 569
+          },
+          "Plank": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 418
+          },
+          "Tree": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 602
+          },
+          "Triangle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 383
+          },
+          "Warrior II": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 431
+          }
+        },
+        "confusion_matrix": [
+          [
+            457,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            423,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            462,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            413,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            429,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            569,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            418,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            602,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            383,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            431
+          ]
+        ],
+        "class_names": [
+          "Chair",
+          "Crescent Lunge",
+          "Downward Dog",
+          "Extended Side Angle",
+          "High Lunge",
+          "Mountain Pose",
+          "Plank",
+          "Tree",
+          "Triangle",
+          "Warrior II"
+        ],
+        "latency": {
+          "mean_ms": 14.372,
+          "std_ms": 3.131,
+          "p50_ms": 14.066,
+          "p95_ms": 15.665,
+          "p99_ms": 17.586
+        }
+      },
+      "MLP": {
+        "classifier": "MLP",
+        "accuracy_mean": 0.9961,
+        "accuracy_std": 0.0023,
+        "accuracy_ci95": [
+          0.9928,
+          0.9993
+        ],
+        "f1_macro_mean": 0.9957,
+        "f1_macro_std": 0.0026,
+        "f1_macro_ci95": [
+          0.9921,
+          0.9992
+        ],
+        "f1_weighted_mean": 0.9961,
+        "f1_weighted_ci95": [
+          0.9928,
+          0.9993
+        ],
+        "per_fold": [
+          {
+            "fold": 1,
+            "accuracy": 0.9978,
+            "f1_macro": 0.9975,
+            "f1_weighted": 0.9978
+          },
+          {
+            "fold": 2,
+            "accuracy": 0.9924,
+            "f1_macro": 0.9915,
+            "f1_weighted": 0.9924
+          },
+          {
+            "fold": 3,
+            "accuracy": 0.9945,
+            "f1_macro": 0.9943,
+            "f1_weighted": 0.9945
+          },
+          {
+            "fold": 4,
+            "accuracy": 0.9989,
+            "f1_macro": 0.9988,
+            "f1_weighted": 0.9989
+          },
+          {
+            "fold": 5,
+            "accuracy": 0.9967,
+            "f1_macro": 0.9963,
+            "f1_weighted": 0.9967
+          }
+        ],
+        "per_class": {
+          "Chair": {
+            "precision": 0.9956,
+            "recall": 1.0,
+            "f1": 0.9978,
+            "support": 457
+          },
+          "Crescent Lunge": {
+            "precision": 0.9837,
+            "recall": 0.9976,
+            "f1": 0.9906,
+            "support": 423
+          },
+          "Downward Dog": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 462
+          },
+          "Extended Side Angle": {
+            "precision": 1.0,
+            "recall": 0.9758,
+            "f1": 0.9877,
+            "support": 413
+          },
+          "High Lunge": {
+            "precision": 0.9976,
+            "recall": 0.9837,
+            "f1": 0.9906,
+            "support": 429
+          },
+          "Mountain Pose": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 569
+          },
+          "Plank": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 418
+          },
+          "Tree": {
+            "precision": 0.9983,
+            "recall": 1.0,
+            "f1": 0.9992,
+            "support": 602
+          },
+          "Triangle": {
+            "precision": 0.9821,
+            "recall": 1.0,
+            "f1": 0.9909,
+            "support": 383
+          },
+          "Warrior II": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 431
+          }
+        },
+        "confusion_matrix": [
+          [
+            457,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            422,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            462,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            0,
+            403,
+            0,
+            0,
+            0,
+            1,
+            7,
+            0
+          ],
+          [
+            0,
+            7,
+            0,
+            0,
+            422,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            569,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            418,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            602,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            383,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            431
+          ]
+        ],
+        "class_names": [
+          "Chair",
+          "Crescent Lunge",
+          "Downward Dog",
+          "Extended Side Angle",
+          "High Lunge",
+          "Mountain Pose",
+          "Plank",
+          "Tree",
+          "Triangle",
+          "Warrior II"
+        ],
+        "latency": {
+          "mean_ms": 0.036,
+          "std_ms": 0.018,
+          "p50_ms": 0.033,
+          "p95_ms": 0.044,
+          "p99_ms": 0.1
+        }
+      }
+    }
+  },
+  "BIO+TEMPORAL": {
+    "condition": "BIO+TEMPORAL",
+    "n_samples": 4587,
+    "n_features": 150,
+    "classifiers": {
+      "Random Forest": {
+        "classifier": "Random Forest",
+        "accuracy_mean": 1.0,
+        "accuracy_std": 0.0,
+        "accuracy_ci95": [
+          1.0,
+          1.0
+        ],
+        "f1_macro_mean": 1.0,
+        "f1_macro_std": 0.0,
+        "f1_macro_ci95": [
+          1.0,
+          1.0
+        ],
+        "f1_weighted_mean": 1.0,
+        "f1_weighted_ci95": [
+          1.0,
+          1.0
+        ],
+        "per_fold": [
+          {
+            "fold": 1,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 2,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 3,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 4,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          },
+          {
+            "fold": 5,
+            "accuracy": 1.0,
+            "f1_macro": 1.0,
+            "f1_weighted": 1.0
+          }
+        ],
+        "per_class": {
+          "Chair": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 457
+          },
+          "Crescent Lunge": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 423
+          },
+          "Downward Dog": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 462
+          },
+          "Extended Side Angle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 413
+          },
+          "High Lunge": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 429
+          },
+          "Mountain Pose": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 569
+          },
+          "Plank": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 418
+          },
+          "Tree": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 602
+          },
+          "Triangle": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 383
+          },
+          "Warrior II": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 431
+          }
+        },
+        "confusion_matrix": [
+          [
+            457,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            423,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            462,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            413,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            429,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            569,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            418,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            602,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            383,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            431
+          ]
+        ],
+        "class_names": [
+          "Chair",
+          "Crescent Lunge",
+          "Downward Dog",
+          "Extended Side Angle",
+          "High Lunge",
+          "Mountain Pose",
+          "Plank",
+          "Tree",
+          "Triangle",
+          "Warrior II"
+        ],
+        "latency": {
+          "mean_ms": 14.355,
+          "std_ms": 2.426,
+          "p50_ms": 14.082,
+          "p95_ms": 15.856,
+          "p99_ms": 16.627
+        }
+      },
+      "MLP": {
+        "classifier": "MLP",
+        "accuracy_mean": 0.9961,
+        "accuracy_std": 0.0035,
+        "accuracy_ci95": [
+          0.9912,
+          1.0009
+        ],
+        "f1_macro_mean": 0.9957,
+        "f1_macro_std": 0.0037,
+        "f1_macro_ci95": [
+          0.9906,
+          1.0008
+        ],
+        "f1_weighted_mean": 0.9961,
+        "f1_weighted_ci95": [
+          0.9912,
+          1.0009
+        ],
+        "per_fold": [
+          {
+            "fold": 1,
+            "accuracy": 0.9978,
+            "f1_macro": 0.9975,
+            "f1_weighted": 0.9978
+          },
+          {
+            "fold": 2,
+            "accuracy": 0.9978,
+            "f1_macro": 0.9975,
+            "f1_weighted": 0.9978
+          },
+          {
+            "fold": 3,
+            "accuracy": 0.9978,
+            "f1_macro": 0.9975,
+            "f1_weighted": 0.9978
+          },
+          {
+            "fold": 4,
+            "accuracy": 0.9891,
+            "f1_macro": 0.9883,
+            "f1_weighted": 0.9891
+          },
+          {
+            "fold": 5,
+            "accuracy": 0.9978,
+            "f1_macro": 0.9975,
+            "f1_weighted": 0.9978
+          }
+        ],
+        "per_class": {
+          "Chair": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 457
+          },
+          "Crescent Lunge": {
+            "precision": 1.0,
+            "recall": 0.9787,
+            "f1": 0.9892,
+            "support": 423
+          },
+          "Downward Dog": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 462
+          },
+          "Extended Side Angle": {
+            "precision": 1.0,
+            "recall": 0.9782,
+            "f1": 0.989,
+            "support": 413
+          },
+          "High Lunge": {
+            "precision": 0.9795,
+            "recall": 1.0,
+            "f1": 0.9896,
+            "support": 429
+          },
+          "Mountain Pose": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 569
+          },
+          "Plank": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 418
+          },
+          "Tree": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 602
+          },
+          "Triangle": {
+            "precision": 0.9871,
+            "recall": 1.0,
+            "f1": 0.9935,
+            "support": 383
+          },
+          "Warrior II": {
+            "precision": 0.9908,
+            "recall": 1.0,
+            "f1": 0.9954,
+            "support": 431
+          }
+        },
+        "confusion_matrix": [
+          [
+            457,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            414,
+            0,
+            0,
+            9,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            462,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            404,
+            0,
+            0,
+            0,
+            0,
+            5,
+            4
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            429,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            569,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            418,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            602,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            383,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            431
+          ]
+        ],
+        "class_names": [
+          "Chair",
+          "Crescent Lunge",
+          "Downward Dog",
+          "Extended Side Angle",
+          "High Lunge",
+          "Mountain Pose",
+          "Plank",
+          "Tree",
+          "Triangle",
+          "Warrior II"
+        ],
+        "latency": {
+          "mean_ms": 0.033,
+          "std_ms": 0.002,
+          "p50_ms": 0.032,
+          "p95_ms": 0.034,
+          "p99_ms": 0.045
+        }
+      }
+    }
+  }
+}

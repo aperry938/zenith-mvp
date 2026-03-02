@@ -7,22 +7,32 @@ STATS_FILE = "zenith_stats.json"
 
 class SessionManager:
     """
-    Manages session recording and long-term persistence (The Vault).
+    Manages session recording and persistence.
     """
     def __init__(self):
+        self.recording = False
+
         # Current Session
         self.start_time = time.time()
         self.flow_scores = []
         self.stability_events = 0
         self.stability_seconds = 0.0
         self.poses_detected = Counter()
-        
+
         # Lifetime Stats
         self.lifetime_duration = 0.0
         self.lifetime_sessions = 0
         self.lifetime_hacks = 0 # Future use
-        
+
         self.load_history()
+
+    def reset(self):
+        """Reset current session data without reloading lifetime stats."""
+        self.start_time = time.time()
+        self.flow_scores = []
+        self.stability_events = 0
+        self.stability_seconds = 0.0
+        self.poses_detected = Counter()
 
     def update(self, pose_label, flow_score, is_stable, fps):
         if flow_score is not None:

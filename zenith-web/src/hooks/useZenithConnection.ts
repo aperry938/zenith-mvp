@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Landmark } from '../utils/drawing';
 
-interface SequenceState {
-    target_pose: string;
-    next_pose: string;
-    status: string;
-    progress: number;
-}
-
 interface SessionStats {
     Duration: string;
     "Avg Flow": string;
@@ -16,8 +9,20 @@ interface SessionStats {
     "Top Pose": string;
 }
 
+interface BioDeviation {
+    feature: string;
+    feature_idx: number;
+    value: number;
+    ideal_lo: number;
+    ideal_hi: number;
+    deviation: number;
+    direction: 'above' | 'below';
+}
+
 interface ZenithMetrics {
-    label: string;
+    label: string | null;
+    confidence?: number;
+    form_assessment?: string;
     flow: number;
     velocity: number;
     q: number;
@@ -26,8 +31,9 @@ interface ZenithMetrics {
     ghost?: number[];
     is_recording?: boolean;
     is_harvesting?: boolean;
-    sequence_state?: SequenceState;
-    voice_message?: string;
+    bio_features?: number[];
+    bio_quality?: number;
+    bio_deviations?: BioDeviation[];
 }
 
 export const useZenithConnection = () => {
@@ -42,17 +48,12 @@ export const useZenithConnection = () => {
     const [isRecording, setIsRecording] = useState(false);
     const [isHarvesting, setIsHarvesting] = useState(false);
 
-    // Sequencer State
-    const [sequenceState, setSequenceState] = useState<SequenceState | null>(null);
-
-    // Voice Queue
-    const [voiceMessage, setVoiceMessage] = useState<string | null>(null);
-
     // Session Report
     const [sessionReport, setSessionReport] = useState<SessionStats | null>(null);
 
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<number | undefined>(undefined);
+    const reconnectDelayRef = useRef<number>(1000);
     const isMounted = useRef(false);
 
     const connect = useCallback(() => {
@@ -69,13 +70,22 @@ export const useZenithConnection = () => {
             console.log("Zenith: Connected");
             setIsConnected(true);
             setIsConnecting(false);
+            reconnectDelayRef.current = 1000; // Reset backoff on success
         };
 
         wsRef.current.onclose = () => {
             console.log("Zenith: Disconnected");
             setIsConnected(false);
-            // Only reconnect if not intentionally closed? 
-            // Actually we want persistent connection unless user leaves page.
+            setIsConnecting(false);
+            // Auto-reconnect with exponential backoff
+            if (isMounted.current) {
+                const delay = reconnectDelayRef.current;
+                console.log(`Zenith: Reconnecting in ${delay}ms...`);
+                reconnectTimeoutRef.current = window.setTimeout(() => {
+                    if (isMounted.current) connect();
+                }, delay);
+                reconnectDelayRef.current = Math.min(delay * 2, 10000); // Max 10s
+            }
         };
 
         wsRef.current.onerror = (err) => {
@@ -93,21 +103,16 @@ export const useZenithConnection = () => {
                     // Received End of Session Report
                     setSessionReport(data.stats);
                 } else {
-                    setMetrics(data);
+                    // Only update metrics when brain actually produced results
+                    if (data.has_result) {
+                        setMetrics(data);
+                    }
                     if (data.landmarks) setLandmarks(data.landmarks);
                     if (data.ghost) setGhost(data.ghost);
 
                     // Sync Server State
                     if (data.is_recording !== undefined) setIsRecording(data.is_recording);
                     if (data.is_harvesting !== undefined) setIsHarvesting(data.is_harvesting);
-
-                    // Sequencer
-                    if (data.sequence_state) setSequenceState(data.sequence_state);
-
-                    // Voice
-                    if (data.voice_message) {
-                        setVoiceMessage(data.voice_message);
-                    }
                 }
             } catch (e) {
                 console.error("Parse Error", e);
@@ -156,10 +161,6 @@ export const useZenithConnection = () => {
         }
     }, []);
 
-    const clearVoiceMessage = useCallback(() => {
-        setVoiceMessage(null);
-    }, []);
-
     const clearSessionReport = useCallback(() => {
         setSessionReport(null);
     }, []);
@@ -173,10 +174,7 @@ export const useZenithConnection = () => {
         ghost,
         isRecording,
         isHarvesting,
-        sequenceState,
-        voiceMessage,
         sessionReport,
-        clearVoiceMessage,
         clearSessionReport,
         sendFrame,
         requestAnalysis,

@@ -23,17 +23,20 @@ export const useZenithVoice = () => {
 
         const utterance = new SpeechSynthesisUtterance(text);
 
-        // Select a voice (Prefer Female/Google/Microsoft/Samantha)
+        // Select the best available voice (prefer natural-sounding voices)
         const voice = voices.find(v =>
-            v.name.includes('Google US English') ||
-            v.name.includes('Samantha') ||
-            v.name.includes('Microsoft Zira')
+            v.name.includes('Samantha') // macOS natural voice
+        ) || voices.find(v =>
+            v.name.includes('Karen') || v.name.includes('Daniel')
+        ) || voices.find(v =>
+            v.name.includes('Google US English')
+        ) || voices.find(v =>
+            v.lang.startsWith('en') && v.localService
         ) || voices[0];
 
         if (voice) utterance.voice = voice;
 
-        // Tweak parameters for a calm "Yoga Instructor" vibe
-        utterance.rate = 0.9;
+        utterance.rate = 0.95;
         utterance.pitch = 1.0;
 
         window.speechSynthesis.speak(utterance);

@@ -48,7 +48,7 @@ export const VideoStage: React.FC<VideoStageProps> = ({ onFrame }) => {
                 ref={canvasRef}
                 width={640}
                 height={480}
-                className="w-[640px] h-[480px] border-4 border-zinc-800 rounded shadow-2xl scale-x-[-1]"
+                className="w-[640px] h-[480px] border-4 border-zinc-800 rounded shadow-2xl"
             />
         </>
     );

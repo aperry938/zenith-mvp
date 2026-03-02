@@ -12,7 +12,7 @@ except ImportError:
 
 class VisionClient:
     """
-    Interface for Multimodal LLM Analysis (The Sage).
+    Multimodal LLM analysis client for biomechanical coaching.
     Connects to Gemini API if key is present, else falls back to mock.
     """
     def __init__(self):
@@ -54,7 +54,7 @@ class VisionClient:
                 response = self.model.generate_content([prompt, pil_img])
                 return response.text.strip()
             except Exception as e:
-                return f"Sage Error: {str(e)}"
+                return f"Analysis Error: {str(e)}"
         
         # Fallback
         time.sleep(1.5)

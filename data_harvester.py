@@ -40,11 +40,7 @@ class DataHarvester:
         path = os.path.join(label_dir, filename)
         
         try:
-            cv2.imwrite(path, cv2.cvtColor(img, cv2.COLOR_BGR2RGB)) # Ensure RGB save if needed, but imwrite expects BGR usually. Input img is BGR from main loop.
-            # Wait, main loop frame is BGR?
-            # app_async_vae.py: img = frame.to_ndarray(format="bgr24")
-            # So cv2.imwrite wants BGR. Pass as is.
-            cv2.imwrite(path, img) 
+            cv2.imwrite(path, img)
             
             self.frame_count += 1
             self.last_save_time = now
