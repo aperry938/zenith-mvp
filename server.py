@@ -24,7 +24,7 @@ from pose_sequencer import PoseSequencer
 logger = setup_logging("zenith.server")
 
 # --- SERVER SETUP ---
-app = FastAPI(title="ZENith API", version="2.4")
+app = FastAPI(title="ZENith API", version="2.5")
 
 app.add_middleware(
     CORSMiddleware,
@@ -59,7 +59,11 @@ async def shutdown():
 
 @app.get("/")
 async def root():
-    return {"status": "ZENith API Online", "version": "2.3"}
+    return {"status": "ZENith API Online", "version": "2.5"}
+
+@app.get("/api/sessions")
+async def get_sessions():
+    return SessionManager.load_sessions()
 
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
@@ -240,6 +244,8 @@ async def websocket_endpoint(websocket: WebSocket):
                             "next_goal": sequencer.get_next_goal(),
                             "progress": sequencer.get_progress(),
                             "completed": sequencer.completed,
+                            "hold_seconds": round(sequencer.get_hold_elapsed(), 1),
+                            "hold_target": sequencer.HOLD_DURATION,
                         }
                         if sequencer.has_announcement():
                             seq_data["announcement"] = sequencer.get_announcement()

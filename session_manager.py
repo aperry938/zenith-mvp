@@ -7,6 +7,8 @@ from config import setup_logging
 
 logger = setup_logging("zenith.session")
 STATS_FILE = "zenith_stats.json"
+SESSIONS_FILE = "zenith_sessions.json"
+MAX_SESSIONS = 50
 
 class SessionManager:
     """
@@ -133,6 +135,51 @@ class SessionManager:
                 try:
                     with open(STATS_FILE, 'w') as f:
                         json.dump(data, f, indent=4)
+                    self._save_session_record(duration)
                     logger.info(f"Session saved ({int(duration)}s)")
                 except Exception as e:
                     logger.error(f"Error saving stats: {e}")
+
+    def _save_session_record(self, duration):
+        """Append individual session record to sessions file."""
+        avg_flow = sum(self.flow_scores) / len(self.flow_scores) if self.flow_scores else 0
+        top_pose = self.poses_detected.most_common(1)[0][0] if self.poses_detected else "None"
+
+        record = {
+            "date": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "duration": int(duration),
+            "avg_flow": int(avg_flow),
+            "peak_flow": int(self.peak_flow),
+            "peak_quality": int(self.peak_quality),
+            "corrections": self.heuristic_correction_count,
+            "top_pose": top_pose,
+            "poses": dict(self.poses_detected),
+        }
+
+        sessions = []
+        if os.path.exists(SESSIONS_FILE):
+            try:
+                with open(SESSIONS_FILE, 'r') as f:
+                    sessions = json.load(f)
+            except Exception:
+                sessions = []
+
+        sessions.append(record)
+        sessions = sessions[-MAX_SESSIONS:]
+
+        try:
+            with open(SESSIONS_FILE, 'w') as f:
+                json.dump(sessions, f, indent=2)
+        except Exception as e:
+            logger.error(f"Error saving session record: {e}")
+
+    @staticmethod
+    def load_sessions():
+        """Load all saved session records."""
+        if os.path.exists(SESSIONS_FILE):
+            try:
+                with open(SESSIONS_FILE, 'r') as f:
+                    return json.load(f)
+            except Exception:
+                return []
+        return []

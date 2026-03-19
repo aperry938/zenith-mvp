@@ -67,6 +67,8 @@ export const useZenithConnection = () => {
         progress: number;
         completed: boolean;
         announcement?: string;
+        hold_seconds?: number;
+        hold_target?: number;
     } | null>(null);
 
     // Session Report

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { VideoStage } from './components/VideoStage';
 import { HUD } from './components/HUD';
 import { GhostOverlay } from './components/GhostOverlay';
@@ -6,6 +7,8 @@ import { GenerativeCoach } from './components/GenerativeCoach';
 import { SessionReport } from './components/SessionReport';
 import { BiomechanicalPanel } from './components/BiomechanicalPanel';
 import { SequenceBar } from './components/SequenceBar';
+import { Onboarding } from './components/Onboarding';
+import { SessionHistory } from './components/SessionHistory';
 import { useZenithConnection } from './hooks/useZenithConnection';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -35,15 +38,32 @@ function ZenithApp() {
     stopSequence,
   } = useZenithConnection();
 
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
   return (
     <div className="w-screen h-screen flex flex-col bg-zenith-bg text-gray-100 overflow-hidden">
       {/* Header */}
       <header className="h-16 border-b border-zinc-800 flex justify-between items-center px-8 bg-zenith-panel z-40 relative">
         <div className="font-bold text-2xl tracking-widest text-white uppercase">
-          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.4</span>
+          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.5</span>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowHistory(h => !h)}
+            aria-label="View session history"
+            className="px-2.5 py-1 rounded text-xs font-mono tracking-wider text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+          >
+            History
+          </button>
+          <button
+            onClick={() => setShowOnboarding(true)}
+            aria-label="Show help guide"
+            className="w-7 h-7 rounded-full border border-zinc-700 text-zinc-500 hover:text-white hover:border-zinc-500 transition-colors text-xs font-bold cursor-pointer"
+          >
+            ?
+          </button>
           {isConnecting && !isConnected && (
             <span className="flex h-3 w-3 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
@@ -112,8 +132,12 @@ function ZenithApp() {
 
       {/* Footer */}
       <footer className="h-10 border-t border-zinc-800 flex justify-center items-center text-xs text-zinc-600 bg-zenith-panel z-40 relative">
-        <p>ZENith v2.4 — Real-Time Biomechanical Movement Analysis</p>
+        <p>ZENith v2.5 — Real-Time Biomechanical Movement Analysis</p>
       </footer>
+
+      {/* Overlays */}
+      <Onboarding forceShow={showOnboarding} onDismiss={() => setShowOnboarding(false)} />
+      {showHistory && <SessionHistory onClose={() => setShowHistory(false)} />}
     </div>
   );
 }

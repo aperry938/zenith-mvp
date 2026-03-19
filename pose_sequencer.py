@@ -24,6 +24,7 @@ class PoseSequencer:
     Manages the state of a guided yoga sequence.
     Tracks current pose index, duration held, and transitions.
     """
+    HOLD_DURATION = 8.0
     def __init__(self, sequence_key="strength_flow"):
         seq = SEQUENCES.get(sequence_key, SEQUENCES["strength_flow"])
         self.sequence_name = seq["name"]
@@ -80,8 +81,8 @@ class PoseSequencer:
                 self.pose_start_time = time.time()
                 self.analysis_triggered_for_current_pose = False
 
-            # Advance after 8 seconds of holding
-            if time.time() - self.pose_start_time > 8.0:
+            # Advance after HOLD_DURATION seconds of holding
+            if time.time() - self.pose_start_time > self.HOLD_DURATION:
                 self.advance()
                 return "Advance"
         else:
@@ -102,6 +103,12 @@ class PoseSequencer:
             next_pose = self.sequence[self.current_index]
             praises = ["Great.", "Perfect.", "Smooth.", "Excellent.", "Well done."]
             self._current_announcement = f"{random.choice(praises)} Now, {next_pose}."
+
+    def get_hold_elapsed(self):
+        """Returns seconds held on current pose, or 0 if not holding."""
+        if self.pose_start_time is None:
+            return 0.0
+        return time.time() - self.pose_start_time
 
     def get_progress(self):
         return self.current_index / len(self.sequence)
