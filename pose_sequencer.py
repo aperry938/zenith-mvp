@@ -1,31 +1,39 @@
 import time
 import random
 
+SEQUENCES = {
+    "warrior_flow": {
+        "name": "Warrior Flow",
+        "description": "Standing strength and lateral flexibility",
+        "poses": ["Mountain Pose", "Warrior II", "Triangle", "Extended Side Angle", "Mountain Pose"],
+    },
+    "balance_flow": {
+        "name": "Balance Flow",
+        "description": "Single-leg balance and lower body power",
+        "poses": ["Mountain Pose", "Tree", "Chair", "High Lunge", "Mountain Pose"],
+    },
+    "strength_flow": {
+        "name": "Strength Flow",
+        "description": "Core and upper body endurance",
+        "poses": ["Mountain Pose", "Plank", "Downward Dog", "Mountain Pose"],
+    },
+}
+
 class PoseSequencer:
     """
-    Manages the state of a specific Yoga Sequence (e.g., Sun Salutation A).
+    Manages the state of a guided yoga sequence.
     Tracks current pose index, duration held, and transitions.
     """
-    def __init__(self):
-        # SUN SALUTATION A (Simplified)
-        self.sequence = [
-            "Mountain Pose",
-            "Upward Salute", # Hands up
-            "Forward Fold",
-            "Halfway Lift",
-            "Plank",
-            "Cobra", # or Up Dog
-            "Downward Dog",
-            # "Halfway Lift", # Return
-            # "Forward Fold",
-            # "Mountain Pose"
-        ]
+    def __init__(self, sequence_key="strength_flow"):
+        seq = SEQUENCES.get(sequence_key, SEQUENCES["strength_flow"])
+        self.sequence_name = seq["name"]
+        self.sequence = list(seq["poses"])
         self.current_index = 0
         self.last_transition_time = time.time()
         self.pose_start_time = None
         self.completed = False
-        self._current_announcement = "Welcome to Zenith. Let's begin with Mountain Pose."
-        
+        self._current_announcement = f"Let's begin {self.sequence_name}. Start with {self.sequence[0]}."
+
         # Oracle State
         self.analysis_triggered_for_current_pose = False
 
@@ -38,10 +46,10 @@ class PoseSequencer:
         if self.completed or self.current_index >= len(self.sequence) - 1:
             return "Finish"
         return self.sequence[self.current_index + 1]
-    
+
     def has_announcement(self):
         return self._current_announcement is not None
-        
+
     def get_announcement(self):
         msg = self._current_announcement
         self._current_announcement = None
@@ -49,87 +57,51 @@ class PoseSequencer:
 
     def check_oracle_trigger(self):
         """
-        Checks if the Oracle (Auto-Analysis) should be triggered.
-        Condition: User has held the correct pose for > 5 seconds AND it hasn't been analyzed yet.
+        Checks if auto-analysis should trigger.
+        Condition: Held correct pose for > 4 seconds, not yet analyzed.
         """
         if self.pose_start_time is None or self.analysis_triggered_for_current_pose:
             return False
-            
-        time_held = time.time() - self.pose_start_time
-        if time_held > 5.0:
-            self.analysis_triggered_for_current_pose = True # Prevent spam
+
+        if time.time() - self.pose_start_time > 4.0:
+            self.analysis_triggered_for_current_pose = True
             return True
-            
         return False
 
     def update(self, detected_label, is_stable):
-        """
-        Updates the sequencer state based on the detected pose.
-        """
+        """Updates sequencer state based on detected pose."""
         if self.completed:
             return "Complete"
 
-        target_pose = self.sequence[self.current_index]
-
-        # Simple Check: If we detect the target pose
-        # (In reality, we might map "Tree" or "Warrior" labels to these, 
-        # but our classifier currently outputs a limited set. 
-        # Let's assume we update the classifier or map closely.)
-        
-        # MAPPING: Our classifier has: 
-        # ["Chair","Downward Dog","Extended Side Angle","High Lunge","Mountain Pose","Plank","Tree","Triangle","Warrior II"]
-        # It's missing Forward Fold, Cobra, etc.
-        # This is the "Ghost in the Machine" - we need a better classifier!
-        # For MVP, we will simulate the sequence logic using the available poses
-        # and just wait for *any* stable pose to advance if no direct match exists,
-        # OR just strictly check the ones we have.
-        
-        # Let's simplify the sequence to what we CAN detect for Cycle 7 Proof of Concept:
-        # Mountain -> Plank -> Downward Dog -> Mountain
-        
-        effective_sequence = ["Mountain Pose", "Plank", "Downward Dog", "Mountain Pose"]
-        
-        # Override the init sequence for this cycle
-        if len(self.sequence) != len(effective_sequence):
-            self.sequence = effective_sequence
-        
         target = self.sequence[self.current_index]
-        
-        # Transition Logic
+
         if detected_label == target:
             if self.pose_start_time is None:
                 self.pose_start_time = time.time()
-                self.analysis_triggered_for_current_pose = False # Reset for new attempt at this pose
-            
-            # If held for 3 seconds (Stable) -> Advance
-            # Wait, if we advance at 3 seconds, we'll never reach 5 seconds for the Oracle!
-            # Let's bump the advance time to 8 seconds to allow for analysis, 
-            # or make Oracle trigger quicker (e.g. 2s) and Advance at 5s.
-            # Let's do: Oracle at 4s, Advance at 8s. giving time to hear advice.
-            
+                self.analysis_triggered_for_current_pose = False
+
+            # Advance after 8 seconds of holding
             if time.time() - self.pose_start_time > 8.0:
-                 self.advance()
-                 return "Advance"
+                self.advance()
+                return "Advance"
         else:
-            self.pose_start_time = None # Reset if they break form
-            
+            self.pose_start_time = None
+
         return "Holding"
 
     def advance(self):
         self.current_index += 1
         self.pose_start_time = None
-        self.analysis_triggered_for_current_pose = False # Reset for next pose
+        self.analysis_triggered_for_current_pose = False
         self.last_transition_time = time.time()
-        
+
         if self.current_index >= len(self.sequence):
             self.completed = True
-            self._current_announcement = "Sequence Complete. Namaste."
+            self._current_announcement = f"{self.sequence_name} complete. Namaste."
         else:
-            # Generate Transition Message
             next_pose = self.sequence[self.current_index]
-            praises = ["Great job.", "Perfect.", "Smooth.", "Excellent."]
-            praise = random.choice(praises)
-            self._current_announcement = f"{praise} Now transition to {next_pose}."
+            praises = ["Great.", "Perfect.", "Smooth.", "Excellent.", "Well done."]
+            self._current_announcement = f"{random.choice(praises)} Now, {next_pose}."
 
     def get_progress(self):
-        return (self.current_index / len(self.sequence))
+        return self.current_index / len(self.sequence)

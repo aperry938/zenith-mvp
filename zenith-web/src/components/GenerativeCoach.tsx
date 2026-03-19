@@ -53,6 +53,7 @@ export const GenerativeCoach: React.FC<GenerativeCoachProps> = ({
             <button
                 onClick={onRequestAnalysis}
                 disabled={isAnalyzing}
+                aria-label="Request AI coach analysis"
                 className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-zenith-neonBlue/30 bg-black/50 backdrop-blur-md shadow-[0_0_20px_rgba(0,204,255,0.1)] flex flex-col items-center justify-center gap-1 pointer-events-auto cursor-pointer transition-all hover:border-zenith-neonBlue/60 hover:shadow-[0_0_30px_rgba(0,204,255,0.2)] disabled:opacity-60 disabled:cursor-wait overflow-hidden relative"
             >
                 {/* Scanline effect */}

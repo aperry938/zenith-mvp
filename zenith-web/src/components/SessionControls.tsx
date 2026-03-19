@@ -8,7 +8,7 @@ interface SessionControlsProps {
     onToggleRecord: () => void;
     onToggleHarvest: () => void;
     onEndSession: () => void;
-    onStartSequence: () => void;
+    onStartSequence: (key: string) => void;
 }
 
 export const SessionControls: React.FC<SessionControlsProps> = ({
@@ -54,18 +54,26 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
                 )}
             </button>
 
-            {/* Sequence Button */}
+            {/* Sequence Buttons */}
             {!isSequencing && (
-                <button
-                    onClick={onStartSequence}
-                    className="flex items-center gap-3 px-4 py-3 rounded border backdrop-blur-sm transition-all text-xs font-bold tracking-widest uppercase bg-zenith-panel/85 border-zinc-800 text-zinc-400 hover:text-zenith-neonBlue hover:border-zenith-neonBlue/50"
-                >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
-                    </svg>
-                    <span>Start Sequence</span>
-                    <InfoTooltip text="Begin a guided Sun Salutation sequence. Hold each pose for 8 seconds to advance. The coach will analyze your form automatically." />
-                </button>
+                <div className="flex flex-col gap-1.5">
+                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest px-1">Guided Flows</span>
+                    {([
+                        { key: "warrior_flow", label: "Warrior", desc: "Standing strength and lateral flexibility" },
+                        { key: "balance_flow", label: "Balance", desc: "Single-leg balance and lower body power" },
+                        { key: "strength_flow", label: "Strength", desc: "Core and upper body endurance" },
+                    ] as const).map(({ key, label, desc }) => (
+                        <button
+                            key={key}
+                            onClick={() => onStartSequence(key)}
+                            aria-label={`Start ${label} flow sequence`}
+                            className="flex items-center gap-2 px-3 py-2 rounded border backdrop-blur-sm transition-all text-xs font-bold tracking-wider uppercase bg-zenith-panel/85 border-zinc-800 text-zinc-400 hover:text-zenith-neonBlue hover:border-zenith-neonBlue/50"
+                        >
+                            <span>{label}</span>
+                            <InfoTooltip text={`${desc}. Hold each pose for 8 seconds to advance.`} />
+                        </button>
+                    ))}
+                </div>
             )}
 
             {/* End Session Button — only visible when recording */}

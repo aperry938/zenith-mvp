@@ -3,6 +3,7 @@ import { useZenithVoice } from '../hooks/useZenithVoice';
 
 interface SequenceBarProps {
     sequence: {
+        name: string;
         current_goal: string;
         next_goal: string;
         progress: number;
@@ -24,6 +25,11 @@ export const SequenceBar: React.FC<SequenceBarProps> = ({ sequence, onStop }) =>
     return (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
             <div className="bg-black/90 border border-zenith-neonBlue/30 rounded-lg px-6 py-3 backdrop-blur-md shadow-[0_0_20px_rgba(0,204,255,0.1)] flex items-center gap-4 min-w-[400px]">
+                {/* Sequence Name */}
+                <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono min-w-[60px]">
+                    {sequence.name}
+                </div>
+
                 {/* Current Goal */}
                 <div className="flex flex-col items-center min-w-[120px]">
                     <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Current</span>
@@ -54,7 +60,7 @@ export const SequenceBar: React.FC<SequenceBarProps> = ({ sequence, onStop }) =>
                 <button
                     onClick={onStop}
                     className="text-zinc-600 hover:text-red-400 text-xs transition-colors cursor-pointer"
-                    title="Stop sequence"
+                    aria-label="Stop sequence"
                 >
                     ✕
                 </button>

@@ -23,6 +23,8 @@ interface HeuristicCorrection {
     hud: string;
     spoken: string;
     speak: boolean;
+    vector?: { start: number[]; end: number[] };
+    color?: number[];
 }
 
 interface ZenithMetrics {
@@ -59,6 +61,7 @@ export const useZenithConnection = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [connectionError, setConnectionError] = useState<string | null>(null);
     const [sequence, setSequence] = useState<{
+        name: string;
         current_goal: string;
         next_goal: string;
         progress: number;
@@ -193,9 +196,9 @@ export const useZenithConnection = () => {
         }
     }, []);
 
-    const startSequence = useCallback(() => {
+    const startSequence = useCallback((sequenceKey: string = "strength_flow") => {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
-            wsRef.current.send(JSON.stringify({ action: "start_sequence" }));
+            wsRef.current.send(JSON.stringify({ action: "start_sequence", sequence: sequenceKey }));
         }
     }, []);
 

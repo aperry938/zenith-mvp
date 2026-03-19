@@ -24,7 +24,7 @@ from pose_sequencer import PoseSequencer
 logger = setup_logging("zenith.server")
 
 # --- SERVER SETUP ---
-app = FastAPI(title="ZENith API", version="2.3")
+app = FastAPI(title="ZENith API", version="2.4")
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,7 +46,7 @@ latest_landmarks_cache = None
 
 @app.on_event("startup")
 async def startup():
-    logger.info(f"ZENith API v2.3 starting on {WS_HOST}:{WS_PORT}")
+    logger.info(f"ZENith API v2.4 starting on {WS_HOST}:{WS_PORT}")
     logger.info(f"CORS origins: {CORS_ORIGINS}")
     logger.info(f"Brain models: clf={'OK' if brain_instance.clf_ok else 'MISSING'}, vae={'OK' if brain_instance.vae_ok else 'MISSING'}")
 
@@ -163,6 +163,11 @@ async def websocket_endpoint(websocket: WebSocket):
                                     "hud": hud_text,
                                     "spoken": spoken_text,
                                     "speak": should_speak,
+                                    "vector": {
+                                        "start": list(correction["vector"][0]),
+                                        "end": list(correction["vector"][1]),
+                                    },
+                                    "color": list(correction["color"]),
                                 }
                                 if should_speak:
                                     heuristic_state["last_text"] = hud_text
@@ -230,6 +235,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     # Pack sequencer state
                     if sequencer:
                         seq_data = {
+                            "name": sequencer.sequence_name,
                             "current_goal": sequencer.get_current_goal(),
                             "next_goal": sequencer.get_next_goal(),
                             "progress": sequencer.get_progress(),
@@ -279,8 +285,9 @@ async def websocket_endpoint(websocket: WebSocket):
                         logger.info(f"Harvesting: {harvester.harvesting}")
                     
                     elif action == "start_sequence":
-                        sequencer = PoseSequencer()
-                        logger.info("Pose sequence started")
+                        seq_key = cmd.get("sequence", "strength_flow")
+                        sequencer = PoseSequencer(sequence_key=seq_key)
+                        logger.info(f"Sequence started: {sequencer.sequence_name}")
 
                     elif action == "stop_sequence":
                         sequencer = None
@@ -305,6 +312,10 @@ async def websocket_endpoint(websocket: WebSocket):
             
     except WebSocketDisconnect:
         logger.info("Client disconnected")
+        if session_mgr.recording:
+            session_mgr.recording = False
+            session_mgr.save_session()
+            logger.info("Session auto-saved on disconnect")
     except Exception as e:
         import traceback
         logger.error(f"WebSocket fatal error: {e}")

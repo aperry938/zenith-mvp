@@ -1,12 +1,65 @@
 import React, { useRef, useEffect } from 'react';
 import { drawSkeleton, drawAngles, flatToLandmarks, type Landmark } from '../utils/drawing';
 
+interface CorrectionVector {
+    start: number[];
+    end: number[];
+}
+
 interface GhostOverlayProps {
     landmarks: Landmark[] | null;
     ghostFlat: number[] | null;
+    correctionVector?: CorrectionVector | null;
+    correctionColor?: number[] | null;
 }
 
-export const GhostOverlay: React.FC<GhostOverlayProps> = ({ landmarks, ghostFlat }) => {
+function drawArrow(
+    ctx: CanvasRenderingContext2D,
+    start: number[],
+    end: number[],
+    color: number[],
+    w: number,
+    h: number
+) {
+    const sx = start[0] * w;
+    const sy = start[1] * h;
+    const ex = end[0] * w;
+    const ey = end[1] * h;
+
+    const cssColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+
+    ctx.save();
+    ctx.strokeStyle = cssColor;
+    ctx.fillStyle = cssColor;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = cssColor;
+    ctx.shadowBlur = 12;
+
+    // Shaft
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+
+    // Arrowhead
+    const angle = Math.atan2(ey - sy, ex - sx);
+    const headLen = 12;
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - headLen * Math.cos(angle - Math.PI / 6), ey - headLen * Math.sin(angle - Math.PI / 6));
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - headLen * Math.cos(angle + Math.PI / 6), ey - headLen * Math.sin(angle + Math.PI / 6));
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+export const GhostOverlay: React.FC<GhostOverlayProps> = ({
+    landmarks,
+    ghostFlat,
+    correctionVector,
+    correctionColor,
+}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -15,7 +68,6 @@ export const GhostOverlay: React.FC<GhostOverlayProps> = ({ landmarks, ghostFlat
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Clear
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Draw Ghost (Cyan)
@@ -30,7 +82,12 @@ export const GhostOverlay: React.FC<GhostOverlayProps> = ({ landmarks, ghostFlat
             drawAngles(ctx, landmarks, 640, 480);
         }
 
-    }, [landmarks, ghostFlat]);
+        // Draw Correction Vector Arrow
+        if (correctionVector && correctionColor) {
+            drawArrow(ctx, correctionVector.start, correctionVector.end, correctionColor, 640, 480);
+        }
+
+    }, [landmarks, ghostFlat, correctionVector, correctionColor]);
 
     return (
         <canvas

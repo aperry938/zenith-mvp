@@ -74,13 +74,23 @@ export const HUD: React.FC<HUDProps> = ({ metrics, advice, heuristicCorrection, 
                     )}
                 </div>
 
-                <div className="relative bg-zenith-panel/85 border border-zinc-800 p-4 rounded-lg backdrop-blur-sm pointer-events-auto z-20">
+                <div className="relative bg-zenith-panel/85 border border-zinc-800 p-4 rounded-lg backdrop-blur-sm pointer-events-auto z-20" role="status" aria-label="Flow score">
                     <h3 className="m-0 text-xs text-zinc-400 tracking-widest mb-1 flex items-center">
                         FLOW
                         <InfoTooltip text="Movement smoothness (0-100). Computed from joint angular velocity jerk. High scores indicate steady, controlled movement. Low scores indicate jerky transitions." />
                     </h3>
                     <div className="text-3xl font-bold font-mono text-zenith-neonPurple drop-shadow-[0_0_10px_rgba(214,51,255,0.3)]">
                         {metrics?.flow?.toFixed(0) || "--"}
+                    </div>
+                    <div className="mt-2 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                            className={`h-full rounded-full transition-all duration-300 ${
+                                (metrics?.flow ?? 0) >= 80 ? 'bg-purple-400' :
+                                (metrics?.flow ?? 0) >= 50 ? 'bg-yellow-500' :
+                                (metrics?.flow ?? 0) >= 30 ? 'bg-orange-500' : 'bg-red-500'
+                            }`}
+                            style={{ width: `${Math.min(100, metrics?.flow ?? 0)}%` }}
+                        />
                     </div>
                 </div>
 
@@ -140,6 +150,7 @@ export const HUD: React.FC<HUDProps> = ({ metrics, advice, heuristicCorrection, 
 
                 <button
                     onClick={onRequestAnalysis}
+                    aria-label="Request AI form analysis"
                     className="relative z-20 w-full px-3 py-2 rounded border border-zinc-700 bg-zenith-panel/85 backdrop-blur-sm text-xs font-bold tracking-widest uppercase text-zinc-400 hover:text-zenith-neonPurple hover:border-zenith-neonPurple/50 transition-all pointer-events-auto cursor-pointer"
                 >
                     Analyze Form
