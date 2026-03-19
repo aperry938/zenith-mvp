@@ -1,69 +1,74 @@
-# Zenith Fullstack Quickstart Guide
-
-This guide will help you set up and run the Zenith AI Yoga Coach (Fullstack Version).
+# ZENith Fullstack Quickstart Guide
 
 ## Prerequisites
-*   Python 3.10+
-*   Node.js 18+
-*   A Google Gemini API Key
+- Python 3.10+
+- Node.js 18+
+- A webcam
+- (Optional) Google Gemini API key for AI coaching
 
-## 1. Backend Setup (Server)
+## 1. Backend Setup
 
-1.  **Environment:**
-    Ensure you are in the root directory (`zenith-mvp-main`).
-    ```bash
-    # (Optional) Create venv
-    python -m venv venv
-    source venv/bin/activate
-    ```
+```bash
+cd zenith-mvp
 
-2.  **Dependencies:**
-    Install the Python requirements.
-    ```bash
-    pip install -r requirements.txt
-    pip install fastapi uvicorn websockets python-multipart
-    ```
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
 
-3.  **API Key:**
-    Set your Gemini API Key.
-    ```bash
-    export GEMINI_API_KEY="your_api_key_here"
-    ```
+# Install dependencies
+pip install -r requirements.txt
 
-4.  **Run Server:**
-    ```bash
-    python server.py
-    ```
-    You should see `Uvicorn running on http://0.0.0.0:8000`.
+# Configure environment (optional)
+cp .env.example .env
+# Edit .env to set GEMINI_API_KEY, CORS origins, log level, etc.
 
-## 2. Frontend Setup (Client)
+# Start server
+python server.py
+```
 
-1.  **Navigate:**
-    ```bash
-    cd zenith-web
-    ```
+You should see structured log output:
+```
+HH:MM:SS | zenith.server      | INFO  | ZENith API v2.3 starting on 0.0.0.0:8000
+HH:MM:SS | zenith.server      | INFO  | Brain models: clf=OK, vae=OK
+```
 
-2.  **Install:**
-    ```bash
-    npm install
-    ```
+## 2. Frontend Setup
 
-3.  **Run:**
-    ```bash
-    npm run dev
-    ```
+```bash
+cd zenith-web
+npm install
+npm run dev
+```
 
-4.  **Open:**
-    Visit the URL shown (usually `http://localhost:5173`). Allow camera access.
+Open `http://localhost:5173` and allow camera access.
 
 ## 3. Usage
 
-*   **Status Indicator:** Should turn GREEN ("LIVE") when connected to the server.
-*   **HUD:** You will see real-time metrics for Pose, Flow, and Quality.
-*   **Ask Sage:** Click the button to have the AI analyze your current frame and give audible advice.
+- **Connection:** Status badge turns GREEN ("LIVE") when connected
+- **HUD (right):** Real-time Pose, Flow, Quality, and Stability metrics
+- **Bio Panel (left):** Biomechanical quality score, deviations, joint angles
+- **Coaching:** Heuristic corrections appear as cyan badges (e.g., "DEEPEN") with spoken feedback
+- **AI Coach (bottom-right):** Click to request Gemini Vision analysis (or mock if no API key)
+- **Sequence:** Click "Start Sequence" for a guided Sun Salutation
+- **Session:** Click "Record Session" to track metrics, "End Session" for a summary report
+
+## 4. Configuration
+
+All settings are in `.env` (see `.env.example`):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ZENITH_HOST` | `0.0.0.0` | Server bind address |
+| `ZENITH_PORT` | `8000` | Server port |
+| `ZENITH_CORS_ORIGINS` | `http://localhost:5173,...` | Allowed CORS origins |
+| `ZENITH_MODEL_DIR` | `.` | Directory containing model weights |
+| `GEMINI_API_KEY` | (empty) | Gemini API key (falls back to mock without it) |
+| `ZENITH_LOG_LEVEL` | `INFO` | Log verbosity (DEBUG, INFO, WARNING, ERROR) |
 
 ## Troubleshooting
 
-*   **Server Error:** Ensure ports 8000 and 5173 are free.
-*   **Camera:** Ensure your browser has permission to access the webcam.
-*   **Gemini Error:** Check your API key.
+- **Server error:** Ensure ports 8000 and 5173 are free
+- **Camera denied:** Check browser permissions, reload page
+- **No camera found:** VideoStage will display an error message
+- **"OFFLINE" badge:** Backend not running or CORS origin mismatch
+- **Gemini errors:** Check API key in `.env`; mock coaching works without it

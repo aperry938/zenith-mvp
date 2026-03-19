@@ -87,7 +87,7 @@ export function drawAngles(
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
 
-    for (const [aIdx, bIdx, cIdx, label] of ANGLE_JOINTS) {
+    for (const [aIdx, bIdx, cIdx, _label] of ANGLE_JOINTS) {
         const a = landmarks[aIdx];
         const b = landmarks[bIdx];
         const c = landmarks[cIdx];

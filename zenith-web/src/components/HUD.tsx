@@ -11,26 +11,45 @@ interface ZenithMetrics {
     q: number;
 }
 
+interface HeuristicCorrection {
+    hud: string;
+    spoken: string;
+    speak: boolean;
+}
+
 interface HUDProps {
     metrics: ZenithMetrics | null;
     advice: string | null;
+    heuristicCorrection: HeuristicCorrection | null;
     onRequestAnalysis: () => void;
 }
 
-export const HUD: React.FC<HUDProps> = ({ metrics, advice, onRequestAnalysis }) => {
+export const HUD: React.FC<HUDProps> = ({ metrics, advice, heuristicCorrection, onRequestAnalysis }) => {
     const { speak } = useZenithVoice();
     const [visibleAdvice, setVisibleAdvice] = useState<string | null>(null);
+    const [visibleHeuristic, setVisibleHeuristic] = useState<string | null>(null);
 
     // Trigger speech and auto-dismiss when advice updates
     useEffect(() => {
         if (advice) {
             speak(advice);
             setVisibleAdvice(advice);
-            // Auto-dismiss after 10 seconds
             const timer = setTimeout(() => setVisibleAdvice(null), 10000);
             return () => clearTimeout(timer);
         }
     }, [advice, speak]);
+
+    // Heuristic coaching corrections
+    useEffect(() => {
+        if (heuristicCorrection) {
+            setVisibleHeuristic(heuristicCorrection.hud);
+            if (heuristicCorrection.speak) {
+                speak(heuristicCorrection.spoken);
+            }
+        } else {
+            setVisibleHeuristic(null);
+        }
+    }, [heuristicCorrection, speak]);
 
     return (
         <>
@@ -41,7 +60,7 @@ export const HUD: React.FC<HUDProps> = ({ metrics, advice, onRequestAnalysis }) 
                         <InfoTooltip text="Random Forest classifier identifies which of 10 yoga poses you're performing. Shows 'No Pose' when confidence is below 60%." />
                     </h3>
                     <div className="text-3xl font-bold font-mono text-zenith-neonBlue drop-shadow-[0_0_10px_rgba(0,204,255,0.3)]">
-                        {metrics?.label || "No Pose"}
+                        {metrics?.label || <span className="text-zinc-600 text-lg">Step into frame</span>}
                     </div>
                     {metrics?.confidence != null && metrics.label && (
                         <div className="text-xs text-zinc-400 font-mono mt-0.5">
@@ -75,6 +94,50 @@ export const HUD: React.FC<HUDProps> = ({ metrics, advice, onRequestAnalysis }) 
                     </div>
                 </div>
 
+                {/* Stability Indicator */}
+                {metrics && (
+                    <div className="relative z-20 bg-zenith-panel/85 border border-zinc-800 px-4 py-2 rounded-lg backdrop-blur-sm pointer-events-auto">
+                        {(() => {
+                            const vel = metrics.velocity ?? 1;
+                            if (vel < 0.05) return (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" />
+                                    <span className="text-green-400 text-xs font-bold font-mono tracking-widest">LOCKED</span>
+                                </div>
+                            );
+                            if (vel < 0.15) return (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                                    <span className="text-yellow-500 text-xs font-mono tracking-widest">STEADY</span>
+                                </div>
+                            );
+                            return (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-zinc-600" />
+                                    <span className="text-zinc-500 text-xs font-mono tracking-widest">MOVING</span>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                )}
+
+                {/* Heuristic Correction Badge */}
+                {visibleHeuristic && (
+                    <div className="relative z-20 bg-zenith-neonBlue/10 border border-zenith-neonBlue/50 p-3 rounded-lg backdrop-blur-sm shadow-[0_0_15px_rgba(0,204,255,0.15)]">
+                        <div className="flex items-center justify-between">
+                            <span className="text-zenith-neonBlue text-sm font-bold font-mono tracking-wider">
+                                {visibleHeuristic}
+                            </span>
+                            <button
+                                onClick={() => setVisibleHeuristic(null)}
+                                className="text-zinc-500 hover:text-white text-xs ml-2 pointer-events-auto cursor-pointer"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 <button
                     onClick={onRequestAnalysis}
                     className="relative z-20 w-full px-3 py-2 rounded border border-zinc-700 bg-zenith-panel/85 backdrop-blur-sm text-xs font-bold tracking-widest uppercase text-zinc-400 hover:text-zenith-neonPurple hover:border-zenith-neonPurple/50 transition-all pointer-events-auto cursor-pointer"
@@ -84,10 +147,20 @@ export const HUD: React.FC<HUDProps> = ({ metrics, advice, onRequestAnalysis }) 
             </div>
 
             {visibleAdvice && (
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 pointer-events-none">
-                    <div className="bg-black/90 border-l-4 border-zenith-neonPurple p-6 rounded-r-lg shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-4 fade-in duration-500">
-                        <h4 className="text-zenith-neonPurple text-xs font-bold tracking-widest mb-2 uppercase">Coach Feedback</h4>
-                        <p className="text-gray-200 text-lg leading-relaxed font-light">{visibleAdvice}</p>
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 pointer-events-auto">
+                    <div className="bg-black/90 border-l-4 border-zenith-neonPurple p-6 rounded-r-lg shadow-2xl backdrop-blur-md">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h4 className="text-zenith-neonPurple text-xs font-bold tracking-widest mb-2 uppercase">Coach Feedback</h4>
+                                <p className="text-gray-200 text-lg leading-relaxed font-light">{visibleAdvice}</p>
+                            </div>
+                            <button
+                                onClick={() => setVisibleAdvice(null)}
+                                className="text-zinc-500 hover:text-white text-sm ml-4 flex-shrink-0 cursor-pointer"
+                            >
+                                ✕
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

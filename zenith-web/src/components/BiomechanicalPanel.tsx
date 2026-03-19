@@ -63,7 +63,7 @@ export const BiomechanicalPanel: React.FC<BiomechanicalPanelProps> = ({
     bioQuality,
     bioDeviations,
     bioFeatures,
-    poseLabel,
+    poseLabel: _poseLabel,
 }) => {
     const q = bioQuality ?? 0;
 

@@ -19,6 +19,12 @@ interface BioDeviation {
     direction: 'above' | 'below';
 }
 
+interface HeuristicCorrection {
+    hud: string;
+    spoken: string;
+    speak: boolean;
+}
+
 interface ZenithMetrics {
     label: string | null;
     confidence?: number;
@@ -34,6 +40,7 @@ interface ZenithMetrics {
     bio_features?: number[];
     bio_quality?: number;
     bio_deviations?: BioDeviation[];
+    heuristic?: HeuristicCorrection;
 }
 
 export const useZenithConnection = () => {
@@ -41,12 +48,23 @@ export const useZenithConnection = () => {
     const [isConnecting, setIsConnecting] = useState(false);
     const [metrics, setMetrics] = useState<ZenithMetrics | null>(null);
     const [advice, setAdvice] = useState<string | null>(null);
+    const [adviceSource, setAdviceSource] = useState<string | null>(null);
     const [landmarks, setLandmarks] = useState<Landmark[] | null>(null);
     const [ghost, setGhost] = useState<number[] | null>(null);
 
     // Persistence State
     const [isRecording, setIsRecording] = useState(false);
     const [isHarvesting, setIsHarvesting] = useState(false);
+    const [heuristicCorrection, setHeuristicCorrection] = useState<HeuristicCorrection | null>(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [connectionError, setConnectionError] = useState<string | null>(null);
+    const [sequence, setSequence] = useState<{
+        current_goal: string;
+        next_goal: string;
+        progress: number;
+        completed: boolean;
+        announcement?: string;
+    } | null>(null);
 
     // Session Report
     const [sessionReport, setSessionReport] = useState<SessionStats | null>(null);
@@ -70,6 +88,7 @@ export const useZenithConnection = () => {
             console.log("Zenith: Connected");
             setIsConnected(true);
             setIsConnecting(false);
+            setConnectionError(null);
             reconnectDelayRef.current = 1000; // Reset backoff on success
         };
 
@@ -77,6 +96,7 @@ export const useZenithConnection = () => {
             console.log("Zenith: Disconnected");
             setIsConnected(false);
             setIsConnecting(false);
+            setConnectionError("Connection lost. Reconnecting...");
             // Auto-reconnect with exponential backoff
             if (isMounted.current) {
                 const delay = reconnectDelayRef.current;
@@ -99,6 +119,10 @@ export const useZenithConnection = () => {
 
                 if (data.type === 'advice') {
                     setAdvice(data.text);
+                    setAdviceSource(data.source || null);
+                    setIsAnalyzing(false);
+                } else if (data.type === 'analysis_started') {
+                    setIsAnalyzing(true);
                 } else if (data.type === 'session_report') {
                     // Received End of Session Report
                     setSessionReport(data.stats);
@@ -106,9 +130,17 @@ export const useZenithConnection = () => {
                     // Only update metrics when brain actually produced results
                     if (data.has_result) {
                         setMetrics(data);
+                        // Heuristic corrections come with metric frames
+                        if (data.heuristic) {
+                            setHeuristicCorrection(data.heuristic);
+                        } else {
+                            setHeuristicCorrection(null);
+                        }
                     }
                     if (data.landmarks) setLandmarks(data.landmarks);
                     if (data.ghost) setGhost(data.ghost);
+                    if (data.sequence) setSequence(data.sequence);
+                    else setSequence(null);
 
                     // Sync Server State
                     if (data.is_recording !== undefined) setIsRecording(data.is_recording);
@@ -161,6 +193,19 @@ export const useZenithConnection = () => {
         }
     }, []);
 
+    const startSequence = useCallback(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ action: "start_sequence" }));
+        }
+    }, []);
+
+    const stopSequence = useCallback(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ action: "stop_sequence" }));
+            setSequence(null);
+        }
+    }, []);
+
     const clearSessionReport = useCallback(() => {
         setSessionReport(null);
     }, []);
@@ -170,16 +215,23 @@ export const useZenithConnection = () => {
         isConnecting,
         metrics,
         advice,
+        adviceSource,
         landmarks,
         ghost,
         isRecording,
         isHarvesting,
+        heuristicCorrection,
+        isAnalyzing,
+        connectionError,
+        sequence,
         sessionReport,
         clearSessionReport,
         sendFrame,
         requestAnalysis,
         toggleRecording,
         toggleHarvesting,
-        endSession
+        endSession,
+        startSequence,
+        stopSequence
     };
 };

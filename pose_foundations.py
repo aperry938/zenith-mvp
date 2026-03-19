@@ -14,9 +14,16 @@ def calculate_angle(a, b, c):
 
 def calculate_vector(start_point, direction_angle, magnitude=0.15):
     """
-    Calculates an end point for a vector.
+    Calculates an end point for a correction vector arrow.
+    start_point: (x, y) in normalized coords
+    direction_angle: degrees (0=right, 90=down in screen coords)
+    magnitude: length in normalized coords
+    Returns: (end_x, end_y)
     """
-    pass
+    rad = np.radians(direction_angle)
+    end_x = start_point[0] + magnitude * np.cos(rad)
+    end_y = start_point[1] + magnitude * np.sin(rad)
+    return (end_x, end_y)
 
 # --- COACHING LIBRARY ---
 # Tuples: (Short HUD Text, Long Spoken Text)

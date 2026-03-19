@@ -4,17 +4,21 @@ import { InfoTooltip } from './InfoTooltip';
 interface SessionControlsProps {
     isRecording: boolean;
     isHarvesting: boolean;
+    isSequencing: boolean;
     onToggleRecord: () => void;
     onToggleHarvest: () => void;
     onEndSession: () => void;
+    onStartSequence: () => void;
 }
 
 export const SessionControls: React.FC<SessionControlsProps> = ({
     isRecording,
     isHarvesting,
+    isSequencing,
     onToggleRecord,
     onToggleHarvest,
-    onEndSession
+    onEndSession,
+    onStartSequence,
 }) => {
     return (
         <div className="absolute bottom-5 left-5 flex flex-col gap-3 pointer-events-auto z-40">
@@ -49,6 +53,20 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
                     <InfoTooltip text="Save labeled frames for model training. Captures video frames with detected pose labels and quality scores to expand the training dataset." />
                 )}
             </button>
+
+            {/* Sequence Button */}
+            {!isSequencing && (
+                <button
+                    onClick={onStartSequence}
+                    className="flex items-center gap-3 px-4 py-3 rounded border backdrop-blur-sm transition-all text-xs font-bold tracking-widest uppercase bg-zenith-panel/85 border-zinc-800 text-zinc-400 hover:text-zenith-neonBlue hover:border-zenith-neonBlue/50"
+                >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                    </svg>
+                    <span>Start Sequence</span>
+                    <InfoTooltip text="Begin a guided Sun Salutation sequence. Hold each pose for 8 seconds to advance. The coach will analyze your form automatically." />
+                </button>
+            )}
 
             {/* End Session Button — only visible when recording */}
             {isRecording && (

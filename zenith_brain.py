@@ -7,6 +7,9 @@ import concurrent.futures as cf
 import joblib
 import os
 import tensorflow as tf
+from config import setup_logging, MODEL_DIR
+
+logger = setup_logging("zenith.brain")
 from tensorflow import keras
 from tensorflow.keras import layers
 from collections import deque, Counter
@@ -58,28 +61,30 @@ class ZenithBrain:
     def load_classifier(self):
         self.clf_ok = False
         self.pose_classifier = None
-        CLF_PATH = "zenith_pose_classifier.pkl"
+        CLF_PATH = str(MODEL_DIR / "zenith_pose_classifier.pkl")
         if os.path.exists(CLF_PATH):
             try:
                 self.pose_classifier = joblib.load(CLF_PATH)
                 self.clf_ok = True
+                logger.info("Classifier loaded")
             except Exception as e:
-                print(f"Brain CLF Error: {e}")
+                logger.error(f"Classifier load error: {e}")
 
     def load_vae(self):
         self.vae_ok = False
         self.encoder = None
         self.decoder = None
-        ENC_W_PATH = "zenith_encoder_weights.weights.h5"
-        DEC_W_PATH = "zenith_decoder_weights.weights.h5"
+        ENC_W_PATH = str(MODEL_DIR / "zenith_encoder_weights.weights.h5")
+        DEC_W_PATH = str(MODEL_DIR / "zenith_decoder_weights.weights.h5")
         if os.path.exists(ENC_W_PATH) and os.path.exists(DEC_W_PATH):
             try:
                 self.encoder, self.decoder = self.build_vae_model()
                 self.encoder.load_weights(ENC_W_PATH)
                 self.decoder.load_weights(DEC_W_PATH)
                 self.vae_ok = True
+                logger.info("VAE loaded")
             except Exception as e:
-                print(f"Brain VAE Error: {e}")
+                logger.error(f"VAE load error: {e}")
 
     def build_vae_model(self, input_dim=132, latent_dim=16):
         class Sampling(layers.Layer):
@@ -227,7 +232,7 @@ class ZenithBrain:
                     self.prev_landmarks_array = feats
 
             except Exception as e:
-                print(f"Brain Error: {e}")
+                logger.error(f"Worker error: {e}")
                 
             if not self.output_queue.empty():
                 try:

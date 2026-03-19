@@ -1,3 +1,5 @@
+# LEGACY: Desktop-mode orchestrator (OpenCV window + TTS + gamification).
+# Preserved for reference. The production web pipeline uses server.py + zenith-web/.
 import os, time, sys, random
 from collections import deque, Counter
 import threading, queue

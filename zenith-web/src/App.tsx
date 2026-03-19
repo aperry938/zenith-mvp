@@ -5,6 +5,7 @@ import { SessionControls } from './components/SessionControls';
 import { GenerativeCoach } from './components/GenerativeCoach';
 import { SessionReport } from './components/SessionReport';
 import { BiomechanicalPanel } from './components/BiomechanicalPanel';
+import { SequenceBar } from './components/SequenceBar';
 import { useZenithConnection } from './hooks/useZenithConnection';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -14,17 +15,24 @@ function ZenithApp() {
     isConnecting,
     metrics,
     advice,
+    adviceSource,
     landmarks,
     ghost,
     isRecording,
     isHarvesting,
+    heuristicCorrection,
+    isAnalyzing,
+    connectionError,
+    sequence,
     sessionReport,
     clearSessionReport,
     sendFrame,
     requestAnalysis,
     toggleRecording,
     toggleHarvesting,
-    endSession
+    endSession,
+    startSequence,
+    stopSequence,
   } = useZenithConnection();
 
   return (
@@ -32,7 +40,7 @@ function ZenithApp() {
       {/* Header */}
       <header className="h-16 border-b border-zinc-800 flex justify-between items-center px-8 bg-zenith-panel z-40 relative">
         <div className="font-bold text-2xl tracking-widest text-white uppercase">
-          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.2</span>
+          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.3</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -51,6 +59,15 @@ function ZenithApp() {
         </div>
       </header>
 
+      {/* Connection Error Banner */}
+      {connectionError && !isConnected && (
+        <div className="absolute top-16 left-0 right-0 z-50 flex justify-center pointer-events-none">
+          <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-mono tracking-wider px-4 py-2 rounded-b-lg backdrop-blur-sm">
+            {connectionError}
+          </div>
+        </div>
+      )}
+
       {/* Main Stage */}
       <main className="flex-1 flex justify-center items-center relative bg-[radial-gradient(circle_at_center,#111_0%,#000_100%)]">
         {/* Layer 0+1: Video + Skeleton in shared coordinate space */}
@@ -66,18 +83,23 @@ function ZenithApp() {
           bioFeatures={metrics?.bio_features}
           poseLabel={metrics?.label}
         />
-        <HUD metrics={metrics} advice={advice} onRequestAnalysis={requestAnalysis} />
+        <HUD metrics={metrics} advice={advice} heuristicCorrection={heuristicCorrection} onRequestAnalysis={requestAnalysis} />
 
         <SessionControls
           isRecording={isRecording}
           isHarvesting={isHarvesting}
+          isSequencing={!!sequence}
           onToggleRecord={toggleRecording}
           onToggleHarvest={toggleHarvesting}
           onEndSession={endSession}
+          onStartSequence={startSequence}
         />
 
+        {/* Pose Sequence Bar */}
+        {sequence && <SequenceBar sequence={sequence} onStop={stopSequence} />}
+
         {/* AI Coach Avatar */}
-        <GenerativeCoach />
+        <GenerativeCoach advice={advice} adviceSource={adviceSource} isAnalyzing={isAnalyzing} onRequestAnalysis={requestAnalysis} />
 
         {/* Session Report Overlay */}
         <SessionReport stats={sessionReport} onClose={clearSessionReport} />
@@ -85,7 +107,7 @@ function ZenithApp() {
 
       {/* Footer */}
       <footer className="h-10 border-t border-zinc-800 flex justify-center items-center text-xs text-zinc-600 bg-zenith-panel z-40 relative">
-        <p>ZENith v2.2 — Real-Time Biomechanical Movement Analysis</p>
+        <p>ZENith v2.3 — Real-Time Biomechanical Movement Analysis</p>
       </footer>
     </div>
   );

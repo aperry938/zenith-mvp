@@ -23,45 +23,43 @@ A short video demonstrating the live application can be found here:
 ## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        React Frontend (Vite)                        │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │
-│  │VideoStage│  │   HUD    │  │  Ghost   │  │ BiomechanicalPanel│  │
-│  │(webcam)  │  │(metrics) │  │ Overlay  │  │ (quality + angles)│  │
-│  └────┬─────┘  └────▲─────┘  └────▲─────┘  └────────▲──────────┘  │
-│       │              │             │                  │             │
-│       │         WebSocket (JSON metadata stream)      │             │
-└───────┼──────────────┼─────────────┼──────────────────┼─────────────┘
-        │              │             │                  │
-   Frame blob     ┌────┴─────────────┴──────────────────┴───┐
-        │         │          FastAPI Gateway (server.py)      │
-        └────────►│                                           │
-                  └───────────────────┬───────────────────────┘
-                                      │
-                  ┌───────────────────▼───────────────────────┐
-                  │           ZenithBrain (zenith_brain.py)    │
-                  │                                           │
-                  │  ┌─────────────┐    ┌──────────────────┐  │
-                  │  │  MediaPipe   │    │  Biomechanical   │  │
-                  │  │  33 landmarks│───►│  Feature Engine   │  │
-                  │  └──────┬──────┘    │  (30 features)   │  │
-                  │         │           └────────┬─────────┘  │
-                  │         │                    │             │
-                  │  ┌──────▼──────┐    ┌───────▼──────────┐  │
-                  │  │ Random Forest│    │  Quality Scoring  │  │
-                  │  │ (pose label) │    │  (pose profiles + │  │
-                  │  └─────────────┘    │   VAE + deviations)│  │
-                  │                     └──────────────────┘  │
-                  │  ┌─────────────┐    ┌──────────────────┐  │
-                  │  │  VAE Ghost   │    │  Bio Flow Score   │  │
-                  │  │ (ideal form) │    │ (angular velocity)│  │
-                  │  └─────────────┘    └──────────────────┘  │
-                  └───────────────────────────────────────────┘
-                                      │
-                  ┌───────────────────▼───────────────────────┐
-                  │        Gemini Vision Coach (optional)      │
-                  │     Context-aware verbal coaching cues      │
-                  └───────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                         React Frontend (Vite)                          │
+│  ┌──────────┐ ┌─────┐ ┌───────┐ ┌──────────┐ ┌────────┐ ┌────────┐  │
+│  │VideoStage│ │ HUD │ │Ghost  │ │Biomech   │ │Generatv│ │Sequence│  │
+│  │(webcam)  │ │     │ │Overlay│ │Panel     │ │Coach   │ │Bar     │  │
+│  └────┬─────┘ └──▲──┘ └──▲───┘ └───▲──────┘ └───▲────┘ └───▲────┘  │
+│       │          │       │         │             │           │        │
+│       │         WebSocket (JSON metadata stream)             │        │
+└───────┼──────────┼───────┼─────────┼─────────────┼───────────┼────────┘
+        │          │       │         │             │           │
+   Frame blob  ┌───┴───────┴─────────┴─────────────┴───────────┴──┐
+        │      │           FastAPI Gateway (server.py)              │
+        └─────►│  PoseHeuristics · PoseSequencer · SessionManager  │
+               └───────────────────────┬───────────────────────────┘
+                                       │
+               ┌───────────────────────▼───────────────────────────┐
+               │            ZenithBrain (zenith_brain.py)           │
+               │                                                    │
+               │  ┌─────────────┐    ┌───────────────────────────┐ │
+               │  │  MediaPipe   │    │  Biomechanical Features   │ │
+               │  │  33 landmarks│───►│  (30 expert-designed)     │ │
+               │  └──────┬──────┘    └────────────┬──────────────┘ │
+               │         │                        │                │
+               │  ┌──────▼──────┐    ┌────────────▼──────────────┐ │
+               │  │ Random Forest│    │  Quality Scoring (profiles │ │
+               │  │ (pose label) │    │  + VAE + deviations)       │ │
+               │  └─────────────┘    └──────────────────────────┘  │
+               │  ┌─────────────┐    ┌──────────────────────────┐  │
+               │  │  VAE Ghost   │    │  Bio Flow Score + Stability│ │
+               │  │ (ideal form) │    │  (angular velocity + jerk) │ │
+               │  └─────────────┘    └──────────────────────────┘  │
+               └───────────────────────────────────────────────────┘
+                                       │
+               ┌───────────────────────▼───────────────────────────┐
+               │         Gemini Vision Coach (optional)             │
+               │   Context-aware coaching with pose + quality data  │
+               └───────────────────────────────────────────────────┘
 ```
 
 ### Processing Pipeline
@@ -74,7 +72,10 @@ A short video demonstrating the live application can be found here:
    - **BIO:** 30 biomechanical features → pose-specific quality scoring → deviation detection
 5. **VAE quality** → reconstruction error against learned correct-form manifold
 6. **Bio flow** → angular velocity-based movement quality (Butterworth-filtered jerk)
-7. **JSON response** → label, quality, deviations, ghost skeleton, flow → frontend HUD
+7. **Heuristic coaching** → rule-based corrections (knee angle, shoulder level, hip alignment) with varied coaching text and server-side debounce
+8. **Pose sequencing** → guided Sun Salutation with per-pose hold timers and auto-progression
+9. **Gemini Vision** → context-aware coaching using pose label, quality score, and deviations
+10. **JSON response** → label, quality, deviations, heuristics, stability, sequence, ghost → frontend
 
 ---
 
@@ -185,49 +186,48 @@ Generated evaluation figures in `evaluation/results/figures/`:
 
 ```
 zenith-mvp/
-├── server.py                    # FastAPI WebSocket gateway
+├── server.py                    # FastAPI WebSocket gateway (heuristics, sequencer, coaching)
+├── config.py                    # Centralized config from env vars + .env
 ├── zenith_brain.py              # Core ML pipeline (MediaPipe + RF + VAE + Bio)
 ├── biomechanical_features.py    # 30 expert-designed features + pose profiles
+├── pose_foundations.py          # Heuristic coaching + correction vectors
+├── pose_sequencer.py            # Guided yoga sequence state machine
+├── vision_client.py             # Gemini Vision API (with mock fallback)
+├── session_manager.py           # Session recording + persistence (thread-safe)
+├── data_harvester.py            # High-quality frame collection (thread-safe)
 ├── vae_biomechanical.py         # Bio-VAE and c-VAE training
-├── pose_foundations.py          # Geometric primitives and heuristics
 ├── train_pose_classifier.py     # Random Forest training
+├── .env.example                 # Configuration template
 │
 ├── ZENith_Data/
 │   ├── videos/                  # Raw .mov recordings
 │   ├── keypoints/               # Extracted .npy files (frames × 33 × 4)
 │   ├── annotations/             # Per-video JSON annotations
-│   │   └── generate_annotations.py
 │   └── models/                  # Trained model weights
-│       ├── pose_classifier.pkl
-│       ├── bio_encoder.weights.h5
-│       ├── bio_decoder.weights.h5
-│       ├── cvae_encoder.weights.h5
-│       └── cvae_decoder.weights.h5
 │
 ├── evaluation/
 │   ├── train_and_evaluate.py    # Ablation study (4 conditions × 2 classifiers)
 │   ├── quality_validation.py    # Quality score vs. expert rating validation
 │   ├── generate_figures.py      # Publication-ready figures
-│   ├── benchmark_latency.py     # Real-time feasibility confirmation
-│   └── results/
-│       ├── ablation_results.json
-│       ├── quality_validation.json
-│       ├── latency_benchmark.json
-│       ├── per_class_metrics.json
-│       ├── confusion_matrices/
-│       └── figures/             # 6 publication-ready PNG figures
+│   ├── benchmark_latency.py     # Latency benchmarks
+│   └── results/                 # JSON outputs + 6 publication-ready figures
 │
 ├── zenith-web/                  # React 19 frontend (Vite + TypeScript + Tailwind)
 │   └── src/
-│       ├── App.tsx
+│       ├── App.tsx              # Root layout with error/connection banners
 │       ├── components/
-│       │   ├── BiomechanicalPanel.tsx  # Real-time bio quality display
-│       │   ├── VideoStage.tsx
-│       │   ├── HUD.tsx
-│       │   ├── GhostOverlay.tsx
-│       │   └── ...
+│       │   ├── VideoStage.tsx          # Webcam (with error/loading states)
+│       │   ├── HUD.tsx                 # Pose, flow, quality, stability
+│       │   ├── BiomechanicalPanel.tsx  # Bio quality + deviations + angles
+│       │   ├── GenerativeCoach.tsx     # AI coach (idle/analyzing/result)
+│       │   ├── SequenceBar.tsx         # Guided sequence progress
+│       │   ├── SessionReport.tsx       # Session summary + timeline
+│       │   ├── SessionControls.tsx     # Record, harvest, sequence
+│       │   ├── GhostOverlay.tsx        # Skeleton + ghost rendering
+│       │   └── ErrorBoundary.tsx       # Crash recovery
 │       └── hooks/
-│           └── useZenithConnection.ts  # WebSocket state management
+│           ├── useZenithConnection.ts  # WebSocket state management
+│           └── useZenithVoice.ts       # TTS speech synthesis
 │
 ├── DATASET_CARD.md              # Gebru et al. dataset documentation
 ├── ANNOTATION_PROTOCOL.md       # Quality rating criteria and feature taxonomy
@@ -258,6 +258,10 @@ cd zenith-mvp
 conda create --name zenith python=3.11 -y
 conda activate zenith
 pip install -r requirements.txt
+
+# Configure (optional — works without Gemini key using mock coaching)
+cp .env.example .env
+# Edit .env to add your GEMINI_API_KEY if desired
 
 # Run the live application
 python server.py

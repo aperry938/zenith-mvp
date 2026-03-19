@@ -1,3 +1,5 @@
+# LEGACY: OpenCV desktop UI drawing system (neon sci-fi HUD).
+# Preserved for reference. The production web pipeline uses zenith-web/ React components.
 import cv2
 import numpy as np
 import mediapipe as mp

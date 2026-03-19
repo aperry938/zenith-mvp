@@ -13,17 +13,22 @@ except ImportError:
     print("FastAPI/Uvicorn not installed. Please install with: pip install fastapi uvicorn")
     sys.exit(1)
 
+from config import setup_logging, CORS_ORIGINS, WS_HOST, WS_PORT
 from zenith_brain import ZenithBrain
 from vision_client import VisionClient
 from session_manager import SessionManager
 from data_harvester import DataHarvester
+from pose_foundations import PoseHeuristics
+from pose_sequencer import PoseSequencer
+
+logger = setup_logging("zenith.server")
 
 # --- SERVER SETUP ---
-app = FastAPI(title="ZENith API", version="2.2")
+app = FastAPI(title="ZENith API", version="2.3")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,19 +44,36 @@ latest_frame_cache = None
 latest_landmarks_cache = None
 # Note: auto_analysis state is per-connection (see websocket_endpoint)
 
+@app.on_event("startup")
+async def startup():
+    logger.info(f"ZENith API v2.3 starting on {WS_HOST}:{WS_PORT}")
+    logger.info(f"CORS origins: {CORS_ORIGINS}")
+    logger.info(f"Brain models: clf={'OK' if brain_instance.clf_ok else 'MISSING'}, vae={'OK' if brain_instance.vae_ok else 'MISSING'}")
+
+@app.on_event("shutdown")
+async def shutdown():
+    logger.info("Shutting down — saving session data")
+    brain_instance.running = False
+    if session_mgr.recording:
+        session_mgr.save_session()
+
 @app.get("/")
 async def root():
-    return {"status": "ZENith API Online", "version": "2.2"}
+    return {"status": "ZENith API Online", "version": "2.3"}
 
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    print("Client Connected to Zenith Stream")
+    logger.info("Client connected")
     
     global latest_frame_cache, latest_landmarks_cache
 
     # Per-connection auto-analysis state
     auto_analysis = {"last_label": None, "hold_start": 0.0, "triggered": False}
+    # Per-connection heuristic debounce state
+    heuristic_state = {"last_text": None, "last_speak_time": 0.0}
+    # Per-connection pose sequencer (None until started)
+    sequencer = None
     
     try:
         while True:
@@ -125,6 +147,27 @@ async def websocket_endpoint(websocket: WebSocket):
                                 })
                             response["bio_deviations"] = devs
 
+                        # --- HEURISTIC COACHING ---
+                        if label and result.get("pose_landmarks"):
+                            lms = result["pose_landmarks"].landmark
+                            lm_dict = {i: [lms[i].x, lms[i].y] for i in range(len(lms))}
+                            correction = PoseHeuristics.evaluate(label, lm_dict)
+                            if correction:
+                                hud_text, spoken_text = correction["text"]
+                                now = time.time()
+                                should_speak = (
+                                    hud_text != heuristic_state["last_text"]
+                                    or (now - heuristic_state["last_speak_time"]) > 5.0
+                                )
+                                response["heuristic"] = {
+                                    "hud": hud_text,
+                                    "spoken": spoken_text,
+                                    "speak": should_speak,
+                                }
+                                if should_speak:
+                                    heuristic_state["last_text"] = hud_text
+                                    heuristic_state["last_speak_time"] = now
+
                         # --- LOGIC UPDATES ---
 
                         is_stable = False
@@ -141,9 +184,15 @@ async def websocket_endpoint(websocket: WebSocket):
                                 auto_analysis["triggered"] = False
                             elif not auto_analysis["triggered"] and (time.time() - auto_analysis["hold_start"]) > 5.0:
                                 auto_analysis["triggered"] = True
-                                print(f"Auto-analysis triggered (held {label} for 5s)")
+                                logger.info(f"Auto-analysis triggered (held {label} for 5s)")
                                 if latest_frame_cache is not None:
-                                    asyncio.create_task(run_coach_analysis(websocket, latest_frame_cache))
+                                    await websocket.send_text(json.dumps({"type": "analysis_started"}))
+                                    asyncio.create_task(run_coach_analysis(
+                                        websocket, latest_frame_cache,
+                                        pose_label=label,
+                                        bio_quality=result.get("bio_quality"),
+                                        deviations=response.get("bio_deviations"),
+                                    ))
                         else:
                             auto_analysis["last_label"] = None
                             auto_analysis["hold_start"] = 0.0
@@ -155,12 +204,40 @@ async def websocket_endpoint(websocket: WebSocket):
                                  pose_label=label,
                                  flow_score=result["flow_score"],
                                  is_stable=is_stable,
-                                 fps=30
+                                 fps=30,
+                                 bio_quality=result.get("bio_quality"),
                              )
+                             if response.get("heuristic") and response["heuristic"].get("speak"):
+                                 session_mgr.log_heuristic_correction()
 
                         # 3. Data Harvesting
                         if getattr(harvester, 'harvesting', False) and label:
                              harvester.save_frame(frame, label, result.get("vae_q", 0))
+
+                        # 4. Pose Sequencer
+                        if sequencer and not sequencer.completed and label:
+                            sequencer.update(label, is_stable)
+                            # Oracle trigger: auto-analyze during sequence
+                            if sequencer.check_oracle_trigger() and latest_frame_cache is not None:
+                                await websocket.send_text(json.dumps({"type": "analysis_started"}))
+                                asyncio.create_task(run_coach_analysis(
+                                    websocket, latest_frame_cache,
+                                    pose_label=label,
+                                    bio_quality=result.get("bio_quality"),
+                                    deviations=response.get("bio_deviations"),
+                                ))
+
+                    # Pack sequencer state
+                    if sequencer:
+                        seq_data = {
+                            "current_goal": sequencer.get_current_goal(),
+                            "next_goal": sequencer.get_next_goal(),
+                            "progress": sequencer.get_progress(),
+                            "completed": sequencer.completed,
+                        }
+                        if sequencer.has_announcement():
+                            seq_data["announcement"] = sequencer.get_announcement()
+                        response["sequence"] = seq_data
 
                     # Always pack cached landmarks so skeleton persists between brain polls
                     if "landmarks" not in response and latest_landmarks_cache is not None:
@@ -183,25 +260,34 @@ async def websocket_endpoint(websocket: WebSocket):
                     
                     if action == "analyze":
                         # Manual Trigger
-                        print("Analysis Requested (Manual)...")
+                        logger.info("Analysis requested (manual)")
                         if latest_frame_cache is not None:
+                            await websocket.send_text(json.dumps({"type": "analysis_started"}))
                             asyncio.create_task(run_coach_analysis(websocket, latest_frame_cache))
                                 
                     elif action == "toggle_record":
                         if not session_mgr.recording:
                             session_mgr.reset()
                             session_mgr.recording = True
-                            print("Recording started (session reset)")
+                            logger.info("Recording started")
                         else:
                             session_mgr.recording = False
-                            print("Recording paused")
+                            logger.info("Recording paused")
                             
                     elif action == "toggle_harvest":
                         harvester.harvesting = not getattr(harvester, 'harvesting', False)
-                        print(f"Harvesting: {harvester.harvesting}")
+                        logger.info(f"Harvesting: {harvester.harvesting}")
                     
+                    elif action == "start_sequence":
+                        sequencer = PoseSequencer()
+                        logger.info("Pose sequence started")
+
+                    elif action == "stop_sequence":
+                        sequencer = None
+                        logger.info("Pose sequence stopped")
+
                     elif action == "end_session":
-                         print("Ending Session...")
+                         logger.info("Ending session")
                          session_mgr.recording = False
 
                          # Generate Report
@@ -215,34 +301,33 @@ async def websocket_endpoint(websocket: WebSocket):
                          session_mgr.reset()
 
                 except Exception as e:
-                    print(f"Command Error: {e}")
+                    logger.error(f"Command error: {e}")
             
     except WebSocketDisconnect:
-        print("Client Disconnected")
+        logger.info("Client disconnected")
     except Exception as e:
         import traceback
-        print(f"WebSocket Fatal Error: {e}")
+        logger.error(f"WebSocket fatal error: {e}")
         traceback.print_exc()
 
-async def run_coach_analysis(websocket: WebSocket, frame):
+async def run_coach_analysis(websocket: WebSocket, frame, pose_label=None, bio_quality=None, deviations=None):
     """
     Runs the vision analysis in a separate thread/executor to avoid blocking the WS loop.
     Sends the result directly to the socket.
     """
     try:
-        success, buffer = cv2.imencode('.jpg', frame)
-        if success:
-             loop = asyncio.get_running_loop()
-             # Note: analyze_frame might be blocking, so we run in executor
-             advice_text = await loop.run_in_executor(None, vision_client.analyze_frame, frame)
-             
-             # Send as 'advice' type (which triggers TTS on client)
-             await websocket.send_text(json.dumps({
-                 "type": "advice",
-                 "text": advice_text 
-             }))
+        loop = asyncio.get_running_loop()
+        advice_text, source = await loop.run_in_executor(
+            None, vision_client.analyze_frame, frame, pose_label, bio_quality, deviations
+        )
+
+        await websocket.send_text(json.dumps({
+            "type": "advice",
+            "text": advice_text,
+            "source": source,
+        }))
     except Exception as e:
-        print(f"Coach Analysis Error: {e}")
+        logger.error(f"Coach analysis error: {e}")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=WS_HOST, port=WS_PORT)
