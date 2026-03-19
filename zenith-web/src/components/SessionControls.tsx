@@ -62,6 +62,7 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
                         { key: "warrior_flow", label: "Warrior", desc: "Standing strength and lateral flexibility" },
                         { key: "balance_flow", label: "Balance", desc: "Single-leg balance and lower body power" },
                         { key: "strength_flow", label: "Strength", desc: "Core and upper body endurance" },
+                        { key: "complete_flow", label: "Complete", desc: "All 10 poses in one comprehensive practice" },
                     ] as const).map(({ key, label, desc }) => (
                         <button
                             key={key}

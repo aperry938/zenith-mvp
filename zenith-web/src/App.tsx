@@ -46,7 +46,7 @@ function ZenithApp() {
       {/* Header */}
       <header className="h-16 border-b border-zinc-800 flex justify-between items-center px-8 bg-zenith-panel z-40 relative">
         <div className="font-bold text-2xl tracking-widest text-white uppercase">
-          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.5</span>
+          ZENith <span className="text-sm text-zinc-500 font-normal normal-case ml-2">v2.6</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -132,7 +132,7 @@ function ZenithApp() {
 
       {/* Footer */}
       <footer className="h-10 border-t border-zinc-800 flex justify-center items-center text-xs text-zinc-600 bg-zenith-panel z-40 relative">
-        <p>ZENith v2.5 — Real-Time Biomechanical Movement Analysis</p>
+        <p>ZENith v2.6 — Real-Time Biomechanical Movement Analysis</p>
       </footer>
 
       {/* Overlays */}

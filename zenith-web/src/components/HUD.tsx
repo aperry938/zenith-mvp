@@ -15,6 +15,7 @@ interface HeuristicCorrection {
     hud: string;
     spoken: string;
     speak: boolean;
+    positive?: boolean;
 }
 
 interface HUDProps {
@@ -28,6 +29,7 @@ export const HUD: React.FC<HUDProps> = ({ metrics, advice, heuristicCorrection, 
     const { speak } = useZenithVoice();
     const [visibleAdvice, setVisibleAdvice] = useState<string | null>(null);
     const [visibleHeuristic, setVisibleHeuristic] = useState<string | null>(null);
+    const [isPositiveFeedback, setIsPositiveFeedback] = useState(false);
 
     // Trigger speech and auto-dismiss when advice updates
     useEffect(() => {
@@ -39,12 +41,18 @@ export const HUD: React.FC<HUDProps> = ({ metrics, advice, heuristicCorrection, 
         }
     }, [advice, speak]);
 
-    // Heuristic coaching corrections
+    // Heuristic coaching corrections / positive feedback
     useEffect(() => {
         if (heuristicCorrection) {
             setVisibleHeuristic(heuristicCorrection.hud);
+            setIsPositiveFeedback(!!heuristicCorrection.positive);
             if (heuristicCorrection.speak) {
                 speak(heuristicCorrection.spoken);
+            }
+            // Auto-dismiss positive feedback after 4s
+            if (heuristicCorrection.positive) {
+                const timer = setTimeout(() => setVisibleHeuristic(null), 4000);
+                return () => clearTimeout(timer);
             }
         } else {
             setVisibleHeuristic(null);
@@ -131,11 +139,17 @@ export const HUD: React.FC<HUDProps> = ({ metrics, advice, heuristicCorrection, 
                     </div>
                 )}
 
-                {/* Heuristic Correction Badge */}
+                {/* Heuristic Coaching Badge */}
                 {visibleHeuristic && (
-                    <div className="relative z-20 bg-zenith-neonBlue/10 border border-zenith-neonBlue/50 p-3 rounded-lg backdrop-blur-sm shadow-[0_0_15px_rgba(0,204,255,0.15)]">
+                    <div className={`relative z-20 p-3 rounded-lg backdrop-blur-sm ${
+                        isPositiveFeedback
+                            ? 'bg-green-500/10 border border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.15)]'
+                            : 'bg-zenith-neonBlue/10 border border-zenith-neonBlue/50 shadow-[0_0_15px_rgba(0,204,255,0.15)]'
+                    }`}>
                         <div className="flex items-center justify-between">
-                            <span className="text-zenith-neonBlue text-sm font-bold font-mono tracking-wider">
+                            <span className={`text-sm font-bold font-mono tracking-wider ${
+                                isPositiveFeedback ? 'text-green-400' : 'text-zenith-neonBlue'
+                            }`}>
                                 {visibleHeuristic}
                             </span>
                             <button

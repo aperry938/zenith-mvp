@@ -23,6 +23,7 @@ interface HeuristicCorrection {
     hud: string;
     spoken: string;
     speak: boolean;
+    positive?: boolean;
     vector?: { start: number[]; end: number[] };
     color?: number[];
 }

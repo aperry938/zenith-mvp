@@ -17,6 +17,15 @@ SEQUENCES = {
         "description": "Core and upper body endurance",
         "poses": ["Mountain Pose", "Plank", "Downward Dog", "Mountain Pose"],
     },
+    "complete_flow": {
+        "name": "Complete Flow",
+        "description": "All 10 poses in one comprehensive practice",
+        "poses": [
+            "Mountain Pose", "Chair", "Warrior II", "Triangle",
+            "Extended Side Angle", "High Lunge", "Crescent Lunge",
+            "Plank", "Downward Dog", "Tree", "Mountain Pose",
+        ],
+    },
 }
 
 class PoseSequencer:

@@ -24,7 +24,7 @@ from pose_sequencer import PoseSequencer
 logger = setup_logging("zenith.server")
 
 # --- SERVER SETUP ---
-app = FastAPI(title="ZENith API", version="2.5")
+app = FastAPI(title="ZENith API", version="2.6")
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,7 +46,7 @@ latest_landmarks_cache = None
 
 @app.on_event("startup")
 async def startup():
-    logger.info(f"ZENith API v2.4 starting on {WS_HOST}:{WS_PORT}")
+    logger.info(f"ZENith API v2.6 starting on {WS_HOST}:{WS_PORT}")
     logger.info(f"CORS origins: {CORS_ORIGINS}")
     logger.info(f"Brain models: clf={'OK' if brain_instance.clf_ok else 'MISSING'}, vae={'OK' if brain_instance.vae_ok else 'MISSING'}")
 
@@ -76,6 +76,8 @@ async def websocket_endpoint(websocket: WebSocket):
     auto_analysis = {"last_label": None, "hold_start": 0.0, "triggered": False}
     # Per-connection heuristic debounce state
     heuristic_state = {"last_text": None, "last_speak_time": 0.0}
+    # Per-connection positive feedback debounce (less frequent)
+    positive_state = {"last_pose": None, "last_time": 0.0}
     # Per-connection pose sequencer (None until started)
     sequencer = None
     
@@ -157,25 +159,49 @@ async def websocket_endpoint(websocket: WebSocket):
                             lm_dict = {i: [lms[i].x, lms[i].y] for i in range(len(lms))}
                             correction = PoseHeuristics.evaluate(label, lm_dict)
                             if correction:
+                                is_positive = correction.get("positive", False)
                                 hud_text, spoken_text = correction["text"]
                                 now = time.time()
-                                should_speak = (
-                                    hud_text != heuristic_state["last_text"]
-                                    or (now - heuristic_state["last_speak_time"]) > 5.0
-                                )
-                                response["heuristic"] = {
-                                    "hud": hud_text,
-                                    "spoken": spoken_text,
-                                    "speak": should_speak,
-                                    "vector": {
-                                        "start": list(correction["vector"][0]),
-                                        "end": list(correction["vector"][1]),
-                                    },
-                                    "color": list(correction["color"]),
-                                }
-                                if should_speak:
-                                    heuristic_state["last_text"] = hud_text
-                                    heuristic_state["last_speak_time"] = now
+
+                                if is_positive:
+                                    # Positive feedback: once per pose, max every 15s
+                                    should_speak = (
+                                        label != positive_state["last_pose"]
+                                        or (now - positive_state["last_time"]) > 15.0
+                                    )
+                                    if should_speak:
+                                        response["heuristic"] = {
+                                            "hud": hud_text,
+                                            "spoken": spoken_text,
+                                            "speak": True,
+                                            "positive": True,
+                                        }
+                                        positive_state["last_pose"] = label
+                                        positive_state["last_time"] = now
+                                else:
+                                    # Correction: debounce by text change or 5s
+                                    should_speak = (
+                                        hud_text != heuristic_state["last_text"]
+                                        or (now - heuristic_state["last_speak_time"]) > 5.0
+                                    )
+                                    vec_data = {}
+                                    if correction.get("vector"):
+                                        vec_data = {
+                                            "vector": {
+                                                "start": list(correction["vector"][0]),
+                                                "end": list(correction["vector"][1]),
+                                            },
+                                            "color": list(correction["color"]),
+                                        }
+                                    response["heuristic"] = {
+                                        "hud": hud_text,
+                                        "spoken": spoken_text,
+                                        "speak": should_speak,
+                                        **vec_data,
+                                    }
+                                    if should_speak:
+                                        heuristic_state["last_text"] = hud_text
+                                        heuristic_state["last_speak_time"] = now
 
                         # --- LOGIC UPDATES ---
 

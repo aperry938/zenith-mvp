@@ -130,6 +130,15 @@ COACHING_LIBRARY = {
         ("REACH DOWN", "Reach your lower hand toward the floor."),
         ("OPEN SIDE", "Create length in your side body."),
     ],
+    # --- POSITIVE FEEDBACK ---
+    "FORM_EXCELLENT": [
+        ("PERFECT", "Beautiful form. Hold it right there."),
+        ("NAILED IT", "That's it. Strong and steady."),
+        ("SOLID", "Solid alignment. Keep breathing."),
+        ("BEAUTIFUL", "Beautiful. You're in the zone."),
+        ("GREAT FORM", "Great form. Stay with it."),
+        ("ON POINT", "Right on point. Keep holding."),
+    ],
 }
 
 class PoseHeuristics:
@@ -168,6 +177,17 @@ class PoseHeuristics:
         return (default_short, default_long)
 
     @staticmethod
+    def _positive():
+        """Return positive feedback when form is good."""
+        advice = PoseHeuristics.get_advice("FORM_EXCELLENT", "GREAT", "Looking good.")
+        return {
+            'text': advice,
+            'vector': None,
+            'color': None,
+            'positive': True,
+        }
+
+    @staticmethod
     def check_warrior_ii(landmarks):
         l_knee_ang = calculate_angle(landmarks[23], landmarks[25], landmarks[27])
         r_knee_ang = calculate_angle(landmarks[24], landmarks[26], landmarks[28])
@@ -201,7 +221,7 @@ class PoseHeuristics:
                 'color': (0, 255, 255)
              }
 
-        return correction
+        return correction if correction else PoseHeuristics._positive()
 
     @staticmethod
     def check_tree(landmarks):
@@ -216,7 +236,7 @@ class PoseHeuristics:
                 'vector': (tuple(pt), (pt[0], pt[1] - 0.1)),
                 'color': (0, 255, 255)
             }
-        return None
+        return PoseHeuristics._positive()
 
     @staticmethod
     def check_plank(landmarks):
@@ -231,7 +251,7 @@ class PoseHeuristics:
                  'vector': (tuple(pt), (pt[0], pt[1] + 0.1)),
                  'color': (0, 255, 255)
              }
-         return None
+         return PoseHeuristics._positive()
 
     @staticmethod
     def check_crescent_lunge(landmarks):
@@ -263,7 +283,7 @@ class PoseHeuristics:
                 'vector': (tuple(mid_shoulder), (mid_shoulder[0], mid_shoulder[1] - 0.12)),
                 'color': (0, 255, 255)
             }
-        return None
+        return PoseHeuristics._positive()
 
     @staticmethod
     def check_chair(landmarks):
@@ -301,7 +321,7 @@ class PoseHeuristics:
                 'vector': (tuple(mid_shoulder), (mid_shoulder[0], mid_shoulder[1] - 0.12)),
                 'color': (0, 255, 255)
             }
-        return None
+        return PoseHeuristics._positive()
 
     @staticmethod
     def check_downward_dog(landmarks):
@@ -331,7 +351,7 @@ class PoseHeuristics:
                 'vector': (tuple(knee_pt), (knee_pt[0], knee_pt[1] + 0.1)),
                 'color': (0, 255, 255)
             }
-        return None
+        return PoseHeuristics._positive()
 
     @staticmethod
     def check_extended_side_angle(landmarks):
@@ -350,7 +370,7 @@ class PoseHeuristics:
                 'vector': (tuple(mid_torso), (mid_torso[0] - 0.12, mid_torso[1] + 0.06)),
                 'color': (0, 255, 255)
             }
-        return None
+        return PoseHeuristics._positive()
 
     @staticmethod
     def check_high_lunge(landmarks):
@@ -382,7 +402,7 @@ class PoseHeuristics:
                 'vector': (tuple(mid_shoulder), (mid_shoulder[0], mid_shoulder[1] - 0.12)),
                 'color': (0, 255, 255)
             }
-        return None
+        return PoseHeuristics._positive()
 
     @staticmethod
     def check_mountain(landmarks):
@@ -417,7 +437,7 @@ class PoseHeuristics:
                 'vector': (tuple(pt), (pt[0], pt[1] - 0.08)),
                 'color': (0, 255, 255)
             }
-        return None
+        return PoseHeuristics._positive()
 
     @staticmethod
     def check_triangle(landmarks):
@@ -449,4 +469,4 @@ class PoseHeuristics:
                 'vector': (tuple(mid), (mid[0] - 0.1, mid[1] + 0.06)),
                 'color': (0, 255, 255)
             }
-        return None
+        return PoseHeuristics._positive()
