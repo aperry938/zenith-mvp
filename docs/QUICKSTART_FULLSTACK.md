@@ -28,7 +28,7 @@ python server.py
 
 You should see structured log output:
 ```
-HH:MM:SS | zenith.server      | INFO  | ZENith API v2.3 starting on 0.0.0.0:8000
+HH:MM:SS | zenith.server      | INFO  | ZENith API v2.5 starting on 0.0.0.0:8000
 HH:MM:SS | zenith.server      | INFO  | Brain models: clf=OK, vae=OK
 ```
 
@@ -44,13 +44,15 @@ Open `http://localhost:5173` and allow camera access.
 
 ## 3. Usage
 
+- **Onboarding:** A welcome guide appears on first visit. Click "?" in the header to re-show it
 - **Connection:** Status badge turns GREEN ("LIVE") when connected
-- **HUD (right):** Real-time Pose, Flow, Quality, and Stability metrics
+- **HUD (right):** Real-time Pose, Flow (with bar), Quality, and Stability metrics
 - **Bio Panel (left):** Biomechanical quality score, deviations, joint angles
-- **Coaching:** Heuristic corrections appear as cyan badges (e.g., "DEEPEN") with spoken feedback
-- **AI Coach (bottom-right):** Click to request Gemini Vision analysis (or mock if no API key)
-- **Sequence:** Click "Start Sequence" for a guided Sun Salutation
-- **Session:** Click "Record Session" to track metrics, "End Session" for a summary report
+- **Coaching:** Heuristic corrections for all 10 poses appear as cyan badges with spoken feedback and correction arrows on the skeleton overlay
+- **AI Coach (bottom-right):** Click to request Gemini Vision analysis (or mock if no API key). Shows "Gemini" or "Demo" source badge
+- **Guided Flows:** Choose from 3 sequences (Warrior, Balance, Strength). Hold timer shows live countdown. Coach auto-analyzes during holds
+- **Session:** Click "Record Session" to track metrics, "End Session" for a summary report with pose timeline
+- **History:** Click "History" in the header to view past sessions
 
 ## 4. Configuration
 
