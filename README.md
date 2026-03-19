@@ -72,8 +72,8 @@ A short video demonstrating the live application can be found here:
    - **BIO:** 30 biomechanical features → pose-specific quality scoring → deviation detection
 5. **VAE quality** → reconstruction error against learned correct-form manifold
 6. **Bio flow** → angular velocity-based movement quality (Butterworth-filtered jerk)
-7. **Heuristic coaching** → rule-based corrections (knee angle, shoulder level, hip alignment) with varied coaching text and server-side debounce
-8. **Pose sequencing** → guided Sun Salutation with per-pose hold timers and auto-progression
+7. **Heuristic coaching** → rule-based corrections for all 9 detectable poses (knee angle, hip alignment, lateral flexion, trunk lean) with varied coaching text, correction vectors, and server-side debounce
+8. **Pose sequencing** → 3 guided flows (Warrior, Balance, Strength) with per-pose hold timers, auto-progression, and oracle-triggered analysis
 9. **Gemini Vision** → context-aware coaching using pose label, quality score, and deviations
 10. **JSON response** → label, quality, deviations, heuristics, stability, sequence, ghost → frontend
 
@@ -244,9 +244,12 @@ zenith-mvp/
 | Biomechanical features | NumPy, SciPy (Butterworth filter) |
 | Quality scoring | TensorFlow / Keras (VAE, c-VAE) |
 | Classification | scikit-learn (Random Forest, MLP) |
+| Heuristic coaching | Rule-based corrections for 9 poses with correction vectors |
+| Guided sequences | 3 yoga flows (Warrior, Balance, Strength) |
 | Frontend | React 19 / Vite / TypeScript / Tailwind |
 | Backend | FastAPI / Uvicorn / WebSocket |
-| Coaching | Google Gemini API |
+| Configuration | python-dotenv / env vars / structured logging |
+| AI Coaching | Google Gemini API (optional, mock fallback) |
 | Language | Python 3.10+ |
 
 ### Reproduction
@@ -289,9 +292,10 @@ Model training notebook: [Google Colab](https://colab.research.google.com/drive/
 
 ## Future Directions
 
-- **Profile calibration:** Refine Extended Side Angle and High Lunge pose profiles (currently show poor correct/incorrect discrimination)
-- **Body-type adaptation:** Investigating how morphological variation affects quality scoring, with the goal of personalized biomechanical baselines
-- **Velocity-based phase detection:** Replace fixed temporal proportions with angular velocity thresholds for entry/hold/exit segmentation
+- **Expanded pose vocabulary:** Train classifier on additional poses (Forward Fold, Cobra, Upward Salute) to enable full Sun Salutation sequences
+- **Body-type adaptation:** Personalized biomechanical baselines that account for morphological variation
+- **Velocity-based phase detection:** Replace fixed temporal hold timers with angular velocity thresholds for entry/hold/exit segmentation
+- **Session analytics dashboard:** Historical session comparison, progress tracking, and weakness identification
 - **Multi-person tracking:** Extend to group yoga classes with per-person quality feedback
 - **Clinical rehabilitation:** Adapting the pipeline to physical therapy contexts
 
