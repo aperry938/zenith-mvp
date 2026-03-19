@@ -72,7 +72,7 @@ A short video demonstrating the live application can be found here:
    - **BIO:** 30 biomechanical features → pose-specific quality scoring → deviation detection
 5. **VAE quality** → reconstruction error against learned correct-form manifold
 6. **Bio flow** → angular velocity-based movement quality (Butterworth-filtered jerk)
-7. **Heuristic coaching** → rule-based corrections for all 9 detectable poses (knee angle, hip alignment, lateral flexion, trunk lean) with varied coaching text, correction vectors, and server-side debounce
+7. **Heuristic coaching** → rule-based corrections for all 10 poses (knee angle, hip alignment, lateral flexion, trunk lean) with varied coaching text, correction vectors, and server-side debounce
 8. **Pose sequencing** → 3 guided flows (Warrior, Balance, Strength) with per-pose hold timers, auto-progression, and oracle-triggered analysis
 9. **Gemini Vision** → context-aware coaching using pose label, quality score, and deviations
 10. **JSON response** → label, quality, deviations, heuristics, stability, sequence, ghost → frontend
@@ -244,7 +244,7 @@ zenith-mvp/
 | Biomechanical features | NumPy, SciPy (Butterworth filter) |
 | Quality scoring | TensorFlow / Keras (VAE, c-VAE) |
 | Classification | scikit-learn (Random Forest, MLP) |
-| Heuristic coaching | Rule-based corrections for 9 poses with correction vectors |
+| Heuristic coaching | Rule-based corrections for all 10 poses with correction vectors |
 | Guided sequences | 3 yoga flows (Warrior, Balance, Strength) |
 | Frontend | React 19 / Vite / TypeScript / Tailwind |
 | Backend | FastAPI / Uvicorn / WebSocket |

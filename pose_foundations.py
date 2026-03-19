@@ -86,6 +86,17 @@ COACHING_LIBRARY = {
         ("REACH OVER", "Lengthen through your top arm."),
         ("OPEN SIDE", "Open your side body. Create space."),
     ],
+    # Crescent Lunge
+    "CLUNGE_DEEPEN": [
+        ("DEEPEN", "Sink deeper into your crescent lunge."),
+        ("BEND MORE", "Bend your front knee toward ninety degrees."),
+        ("LOWER HIPS", "Drop your hips lower."),
+    ],
+    "CLUNGE_UPRIGHT": [
+        ("UPRIGHT", "Lift your torso over your hips."),
+        ("CHEST UP", "Draw your chest upward."),
+        ("TALL SPINE", "Lengthen through the crown of your head."),
+    ],
     # High Lunge
     "HLUNGE_DEEPEN": [
         ("DEEPEN", "Bend your front knee deeper."),
@@ -137,6 +148,7 @@ class PoseHeuristics:
             "Tree": PoseHeuristics.check_tree,
             "Plank": PoseHeuristics.check_plank,
             "Chair": PoseHeuristics.check_chair,
+            "Crescent Lunge": PoseHeuristics.check_crescent_lunge,
             "Downward Dog": PoseHeuristics.check_downward_dog,
             "Extended Side Angle": PoseHeuristics.check_extended_side_angle,
             "High Lunge": PoseHeuristics.check_high_lunge,
@@ -220,6 +232,38 @@ class PoseHeuristics:
                  'color': (0, 255, 255)
              }
          return None
+
+    @staticmethod
+    def check_crescent_lunge(landmarks):
+        # Front knee — ideal 130-170° (POSE_PROFILES: 0.72-0.94)
+        l_knee = calculate_angle(landmarks[23], landmarks[25], landmarks[27])
+        r_knee = calculate_angle(landmarks[24], landmarks[26], landmarks[28])
+        front_idx = 25 if l_knee < r_knee else 26
+        front_angle = l_knee if front_idx == 25 else r_knee
+        knee_pt = landmarks[front_idx]
+
+        if front_angle > 170:
+            advice = PoseHeuristics.get_advice("CLUNGE_DEEPEN", "DEEPEN", "Sink deeper into your lunge.")
+            return {
+                'text': advice,
+                'vector': (tuple(knee_pt), (knee_pt[0], knee_pt[1] + 0.12)),
+                'color': (0, 255, 255)
+            }
+
+        # Trunk lean — ideal <30° (POSE_PROFILES: 0.0-0.17)
+        mid_shoulder = [(landmarks[11][0] + landmarks[12][0]) / 2,
+                        (landmarks[11][1] + landmarks[12][1]) / 2]
+        mid_hip = [(landmarks[23][0] + landmarks[24][0]) / 2,
+                   (landmarks[23][1] + landmarks[24][1]) / 2]
+        dx = abs(mid_shoulder[0] - mid_hip[0])
+        if dx > 0.1:
+            advice = PoseHeuristics.get_advice("CLUNGE_UPRIGHT", "UPRIGHT", "Lift chest upright.")
+            return {
+                'text': advice,
+                'vector': (tuple(mid_shoulder), (mid_shoulder[0], mid_shoulder[1] - 0.12)),
+                'color': (0, 255, 255)
+            }
+        return None
 
     @staticmethod
     def check_chair(landmarks):

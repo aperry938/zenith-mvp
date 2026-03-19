@@ -10,7 +10,7 @@ SEQUENCES = {
     "balance_flow": {
         "name": "Balance Flow",
         "description": "Single-leg balance and lower body power",
-        "poses": ["Mountain Pose", "Tree", "Chair", "High Lunge", "Mountain Pose"],
+        "poses": ["Mountain Pose", "Tree", "Chair", "High Lunge", "Crescent Lunge", "Mountain Pose"],
     },
     "strength_flow": {
         "name": "Strength Flow",
