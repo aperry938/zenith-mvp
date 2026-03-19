@@ -29,6 +29,92 @@ const POSE_COLORS: Record<string, string> = {
     "Extended Side Angle": "bg-cyan-500",
 };
 
+const POSE_HEX_COLORS: Record<string, string> = {
+    "Mountain Pose": "#22c55e",
+    "Warrior II": "#ef4444",
+    "Tree": "#34d399",
+    "Downward Dog": "#3b82f6",
+    "Plank": "#f97316",
+    "Chair": "#eab308",
+    "Triangle": "#a855f7",
+    "High Lunge": "#ec4899",
+    "Extended Side Angle": "#06b6d4",
+};
+
+function exportSession(stats: SessionStats) {
+    const timeline = stats["Pose Timeline"] || [];
+    const uniquePoses = [...new Set(timeline.map(e => e.pose))];
+    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const timelineBarHtml = timeline.length > 0 ? `
+        <div style="margin: 24px 0;">
+            <h3 style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #888; margin-bottom: 8px;">Pose Timeline</h3>
+            <div style="display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: #e5e5e5;">
+                ${timeline.map(entry => `<div style="flex: 1; background: ${POSE_HEX_COLORS[entry.pose] || '#999'};" title="${entry.pose} (${entry.t}s)"></div>`).join('')}
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; justify-content: center;">
+                ${uniquePoses.map(pose => `<div style="display: flex; align-items: center; gap: 4px;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${POSE_HEX_COLORS[pose] || '#999'};"></div>
+                    <span style="font-size: 11px; color: #666;">${pose}</span>
+                </div>`).join('')}
+            </div>
+        </div>
+    ` : '';
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ZENith Session Report - ${date}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; color: #111; }
+        h1 { font-size: 24px; text-transform: uppercase; letter-spacing: 4px; text-align: center; margin-bottom: 4px; }
+        .subtitle { font-size: 13px; color: #888; text-align: center; margin-bottom: 24px; }
+        .divider { height: 1px; background: linear-gradient(to right, transparent, #ccc, transparent); margin: 20px 0; }
+        .grid { display: grid; gap: 12px; }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .metric { background: #f8f8f8; border: 1px solid #e5e5e5; border-radius: 8px; padding: 16px; text-align: center; }
+        .metric .label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #888; margin-bottom: 4px; }
+        .metric .value { font-size: 22px; font-weight: 700; font-family: 'SF Mono', 'Menlo', monospace; }
+        .metric-sm .value { font-size: 16px; }
+        .footer { margin-top: 32px; text-align: center; font-size: 11px; color: #aaa; }
+        @media print { body { margin: 0; } }
+    </style>
+</head>
+<body>
+    <h1>Session Report</h1>
+    <p class="subtitle">${date}</p>
+    <div class="divider"></div>
+
+    <div class="grid grid-2" style="margin-bottom: 12px;">
+        <div class="metric"><div class="label">Duration</div><div class="value">${stats.Duration}</div></div>
+        <div class="metric"><div class="label">Avg Flow</div><div class="value">${stats["Avg Flow"]}</div></div>
+        <div class="metric"><div class="label">Zone Time</div><div class="value">${stats["Zone Time"]}</div></div>
+        <div class="metric"><div class="label">Top Pose</div><div class="value" style="font-size: 16px;">${stats["Top Pose"]}</div></div>
+    </div>
+
+    <div class="grid grid-3">
+        ${stats["Peak Flow"] ? `<div class="metric metric-sm"><div class="label">Peak Flow</div><div class="value">${stats["Peak Flow"]}</div></div>` : ''}
+        ${stats["Peak Quality"] ? `<div class="metric metric-sm"><div class="label">Peak Quality</div><div class="value">${stats["Peak Quality"]}</div></div>` : ''}
+        ${stats.Corrections !== undefined ? `<div class="metric metric-sm"><div class="label">Corrections</div><div class="value">${stats.Corrections}</div></div>` : ''}
+    </div>
+
+    ${timelineBarHtml}
+
+    <div class="footer">ZENith - Real-Time Biomechanical Movement Analysis</div>
+</body>
+</html>`;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.onload = () => printWindow.print();
+    }
+}
+
 export const SessionReport: React.FC<SessionReportProps> = ({ stats, onClose }) => {
     if (!stats) return null;
 
@@ -95,13 +181,21 @@ export const SessionReport: React.FC<SessionReportProps> = ({ stats, onClose }) 
                     </div>
                 )}
 
-                {/* Action */}
-                <button
-                    onClick={onClose}
-                    className="mt-4 px-8 py-3 bg-white text-black font-bold uppercase tracking-widest rounded-full hover:bg-zenith-neonBlue hover:shadow-[0_0_20px_rgba(0,255,255,0.4)] transition-all cursor-pointer"
-                >
-                    Close Report
-                </button>
+                {/* Actions */}
+                <div className="flex gap-3 mt-4">
+                    <button
+                        onClick={() => exportSession(stats)}
+                        className="px-6 py-3 bg-zinc-800 text-zinc-300 font-bold uppercase tracking-widest rounded-full border border-zinc-700 hover:bg-zinc-700 hover:text-white transition-all cursor-pointer text-sm"
+                    >
+                        Export
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="px-8 py-3 bg-white text-black font-bold uppercase tracking-widest rounded-full hover:bg-zenith-neonBlue hover:shadow-[0_0_20px_rgba(0,255,255,0.4)] transition-all cursor-pointer"
+                    >
+                        Close Report
+                    </button>
+                </div>
             </div>
         </div>
     );

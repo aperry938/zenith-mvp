@@ -18,8 +18,10 @@ from zenith_brain import ZenithBrain
 from vision_client import VisionClient
 from session_manager import SessionManager
 from data_harvester import DataHarvester
-from pose_foundations import PoseHeuristics
+from pose_foundations import PoseHeuristics, VALID_PERSONAS
 from pose_sequencer import PoseSequencer
+from streak_tracker import StreakTracker
+from progress_tracker import ProgressTracker
 
 logger = setup_logging("zenith.server")
 
@@ -65,6 +67,16 @@ async def root():
 async def get_sessions():
     return SessionManager.load_sessions()
 
+@app.get("/api/streaks")
+async def get_streaks():
+    tracker = StreakTracker()
+    return tracker.get_stats()
+
+@app.get("/api/progress")
+async def get_progress():
+    tracker = ProgressTracker()
+    return tracker.get_progress()
+
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -80,6 +92,10 @@ async def websocket_endpoint(websocket: WebSocket):
     positive_state = {"last_pose": None, "last_time": 0.0}
     # Per-connection pose sequencer (None until started)
     sequencer = None
+    # Per-connection intensity level (1=gentle, 2=standard, 3=intense)
+    intensity = 2
+    # Per-connection coach persona
+    persona = 'default'
     
     try:
         while True:
@@ -157,7 +173,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         if label and result.get("pose_landmarks"):
                             lms = result["pose_landmarks"].landmark
                             lm_dict = {i: [lms[i].x, lms[i].y] for i in range(len(lms))}
-                            correction = PoseHeuristics.evaluate(label, lm_dict)
+                            correction = PoseHeuristics.evaluate(label, lm_dict, intensity, persona)
                             if correction:
                                 is_positive = correction.get("positive", False)
                                 hud_text, spoken_text = correction["text"]
@@ -272,6 +288,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             "completed": sequencer.completed,
                             "hold_seconds": round(sequencer.get_hold_elapsed(), 1),
                             "hold_target": sequencer.HOLD_DURATION,
+                            "breath_cue": sequencer.get_breath_cue(),
                         }
                         if sequencer.has_announcement():
                             seq_data["announcement"] = sequencer.get_announcement()
@@ -318,12 +335,25 @@ async def websocket_endpoint(websocket: WebSocket):
                     
                     elif action == "start_sequence":
                         seq_key = cmd.get("sequence", "strength_flow")
-                        sequencer = PoseSequencer(sequence_key=seq_key)
+                        sanskrit = cmd.get("sanskrit_count", False)
+                        sequencer = PoseSequencer(sequence_key=seq_key, sanskrit_count=sanskrit)
                         logger.info(f"Sequence started: {sequencer.sequence_name}")
 
                     elif action == "stop_sequence":
                         sequencer = None
                         logger.info("Pose sequence stopped")
+
+                    elif action == "set_intensity":
+                        intensity = max(1, min(3, int(cmd.get("intensity", 2))))
+                        logger.info(f"Intensity set to {intensity}")
+
+                    elif action == "set_persona":
+                        requested = cmd.get("persona", "default")
+                        if requested in VALID_PERSONAS:
+                            persona = requested
+                            logger.info(f"Persona set to '{persona}'")
+                        else:
+                            logger.warning(f"Invalid persona '{requested}', keeping '{persona}'")
 
                     elif action == "end_session":
                          logger.info("Ending session")

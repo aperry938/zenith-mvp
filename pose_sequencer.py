@@ -1,6 +1,8 @@
 import time
 import random
 
+SANSKRIT_COUNTS = ["Eka", "Dvi", "Trini", "Chatvari", "Pancha"]
+
 SEQUENCES = {
     "warrior_flow": {
         "name": "Warrior Flow",
@@ -34,7 +36,7 @@ class PoseSequencer:
     Tracks current pose index, duration held, and transitions.
     """
     HOLD_DURATION = 8.0
-    def __init__(self, sequence_key="strength_flow"):
+    def __init__(self, sequence_key="strength_flow", sanskrit_count=False):
         seq = SEQUENCES.get(sequence_key, SEQUENCES["strength_flow"])
         self.sequence_name = seq["name"]
         self.sequence = list(seq["poses"])
@@ -43,9 +45,17 @@ class PoseSequencer:
         self.pose_start_time = None
         self.completed = False
         self._current_announcement = f"Let's begin {self.sequence_name}. Start with {self.sequence[0]}."
+        self.sanskrit_count = sanskrit_count
+
+        # Breath cue: alternates per pose transition
+        self._breath_inhale = True  # First pose starts with inhale
 
         # Oracle State
         self.analysis_triggered_for_current_pose = False
+
+    def get_breath_cue(self):
+        """Returns current breath cue: 'Inhale' or 'Exhale'."""
+        return "Inhale" if self._breath_inhale else "Exhale"
 
     def get_current_goal(self):
         if self.completed:
@@ -104,6 +114,7 @@ class PoseSequencer:
         self.pose_start_time = None
         self.analysis_triggered_for_current_pose = False
         self.last_transition_time = time.time()
+        self._breath_inhale = not self._breath_inhale  # Alternate breath
 
         if self.current_index >= len(self.sequence):
             self.completed = True
@@ -111,7 +122,11 @@ class PoseSequencer:
         else:
             next_pose = self.sequence[self.current_index]
             praises = ["Great.", "Perfect.", "Smooth.", "Excellent.", "Well done."]
-            self._current_announcement = f"{random.choice(praises)} Now, {next_pose}."
+            breath = self.get_breath_cue()
+            sanskrit = ""
+            if self.sanskrit_count and self.current_index <= len(SANSKRIT_COUNTS):
+                sanskrit = f" {SANSKRIT_COUNTS[self.current_index - 1]}."
+            self._current_announcement = f"{random.choice(praises)}{sanskrit} {breath}. Now, {next_pose}."
 
     def get_hold_elapsed(self):
         """Returns seconds held on current pose, or 0 if not holding."""

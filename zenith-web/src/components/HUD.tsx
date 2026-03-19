@@ -23,9 +23,10 @@ interface HUDProps {
     advice: string | null;
     heuristicCorrection: HeuristicCorrection | null;
     onRequestAnalysis: () => void;
+    breathCue?: string;
 }
 
-export const HUD: React.FC<HUDProps> = ({ metrics, advice, heuristicCorrection, onRequestAnalysis }) => {
+export const HUD: React.FC<HUDProps> = ({ metrics, advice, heuristicCorrection, onRequestAnalysis, breathCue }) => {
     const { speak } = useZenithVoice();
     const [visibleAdvice, setVisibleAdvice] = useState<string | null>(null);
     const [visibleHeuristic, setVisibleHeuristic] = useState<string | null>(null);
@@ -101,6 +102,26 @@ export const HUD: React.FC<HUDProps> = ({ metrics, advice, heuristicCorrection, 
                         />
                     </div>
                 </div>
+
+                {/* Breath Cue Indicator */}
+                {breathCue && (
+                    <div className={`relative z-20 px-4 py-2 rounded-lg backdrop-blur-sm border ${
+                        breathCue === 'Inhale'
+                            ? 'bg-sky-500/10 border-sky-500/30'
+                            : 'bg-amber-500/10 border-amber-500/30'
+                    }`}>
+                        <div className="flex items-center gap-2">
+                            <span className={`text-lg ${breathCue === 'Inhale' ? 'text-sky-400' : 'text-amber-400'}`}>
+                                {breathCue === 'Inhale' ? '\u25B2' : '\u25BC'}
+                            </span>
+                            <span className={`text-xs font-bold font-mono tracking-widest ${
+                                breathCue === 'Inhale' ? 'text-sky-400' : 'text-amber-400'
+                            }`}>
+                                {breathCue.toUpperCase()}
+                            </span>
+                        </div>
+                    </div>
+                )}
 
                 <div className="relative z-20 bg-zenith-panel/85 border border-zinc-800 p-4 rounded-lg backdrop-blur-sm pointer-events-auto">
                     <h3 className="m-0 text-xs text-zinc-400 tracking-widest mb-1 flex items-center">

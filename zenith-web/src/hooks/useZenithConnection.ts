@@ -70,7 +70,13 @@ export const useZenithConnection = () => {
         announcement?: string;
         hold_seconds?: number;
         hold_target?: number;
+        breath_cue?: string;
     } | null>(null);
+    const [intensity, setIntensityState] = useState(2);
+    const [persona, setPersonaState] = useState<string>(() => {
+        try { return localStorage.getItem('zenith_persona') || 'default'; }
+        catch { return 'default'; }
+    });
 
     // Session Report
     const [sessionReport, setSessionReport] = useState<SessionStats | null>(null);
@@ -79,6 +85,7 @@ export const useZenithConnection = () => {
     const reconnectTimeoutRef = useRef<number | undefined>(undefined);
     const reconnectDelayRef = useRef<number>(1000);
     const isMounted = useRef(false);
+    const personaRef = useRef(persona);
 
     const connect = useCallback(() => {
         if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
@@ -96,6 +103,10 @@ export const useZenithConnection = () => {
             setIsConnecting(false);
             setConnectionError(null);
             reconnectDelayRef.current = 1000; // Reset backoff on success
+            // Send saved persona on connect so backend knows immediately
+            if (personaRef.current !== 'default') {
+                wsRef.current?.send(JSON.stringify({ action: "set_persona", persona: personaRef.current }));
+            }
         };
 
         wsRef.current.onclose = () => {
@@ -212,6 +223,24 @@ export const useZenithConnection = () => {
         }
     }, []);
 
+    const setIntensity = useCallback((level: number) => {
+        const clamped = Math.max(1, Math.min(3, level));
+        setIntensityState(clamped);
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ action: "set_intensity", intensity: clamped }));
+        }
+    }, []);
+
+    const setPersona = useCallback((p: string) => {
+        setPersonaState(p);
+        personaRef.current = p;
+        try { localStorage.setItem('zenith_persona', p); }
+        catch { /* ignore */ }
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ action: "set_persona", persona: p }));
+        }
+    }, []);
+
     const clearSessionReport = useCallback(() => {
         setSessionReport(null);
     }, []);
@@ -231,6 +260,8 @@ export const useZenithConnection = () => {
         connectionError,
         sequence,
         sessionReport,
+        intensity,
+        persona,
         clearSessionReport,
         sendFrame,
         requestAnalysis,
@@ -238,6 +269,8 @@ export const useZenithConnection = () => {
         toggleHarvesting,
         endSession,
         startSequence,
-        stopSequence
+        stopSequence,
+        setIntensity,
+        setPersona,
     };
 };

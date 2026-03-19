@@ -1,5 +1,8 @@
 import React from 'react';
 import { InfoTooltip } from './InfoTooltip';
+import { PersonaSelector } from './PersonaSelector';
+
+const INTENSITY_LABELS = ['Gentle', 'Standard', 'Intense'] as const;
 
 interface SessionControlsProps {
     isRecording: boolean;
@@ -9,6 +12,10 @@ interface SessionControlsProps {
     onToggleHarvest: () => void;
     onEndSession: () => void;
     onStartSequence: (key: string) => void;
+    intensity: number;
+    onSetIntensity: (level: number) => void;
+    persona: string;
+    onSetPersona: (persona: string) => void;
 }
 
 export const SessionControls: React.FC<SessionControlsProps> = ({
@@ -19,6 +26,10 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
     onToggleHarvest,
     onEndSession,
     onStartSequence,
+    intensity,
+    onSetIntensity,
+    persona,
+    onSetPersona,
 }) => {
     return (
         <div className="absolute bottom-5 left-5 flex flex-col gap-3 pointer-events-auto z-40">
@@ -53,6 +64,37 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
                     <InfoTooltip text="Save labeled frames for model training. Captures video frames with detected pose labels and quality scores to expand the training dataset." />
                 )}
             </button>
+
+            {/* Intensity Selector */}
+            <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] text-zinc-500 uppercase tracking-widest px-1">Intensity</span>
+                <div className="flex gap-1">
+                    {INTENSITY_LABELS.map((label, i) => {
+                        const level = i + 1;
+                        const isActive = intensity === level;
+                        return (
+                            <button
+                                key={label}
+                                onClick={() => onSetIntensity(level)}
+                                className={`flex-1 px-2 py-1.5 rounded text-[10px] font-bold tracking-wider uppercase transition-all border cursor-pointer ${
+                                    isActive
+                                        ? level === 1
+                                            ? 'bg-green-500/20 border-green-500/50 text-green-400'
+                                            : level === 2
+                                            ? 'bg-zenith-neonBlue/20 border-zenith-neonBlue/50 text-zenith-neonBlue'
+                                            : 'bg-red-500/20 border-red-500/50 text-red-400'
+                                        : 'bg-zenith-panel/85 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                                }`}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Coach Persona */}
+            <PersonaSelector persona={persona} onSetPersona={onSetPersona} />
 
             {/* Sequence Buttons */}
             {!isSequencing && (

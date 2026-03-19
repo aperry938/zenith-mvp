@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { VideoStage } from './components/VideoStage';
 import { HUD } from './components/HUD';
 import { GhostOverlay } from './components/GhostOverlay';
@@ -28,6 +28,7 @@ function ZenithApp() {
     connectionError,
     sequence,
     sessionReport,
+    intensity,
     clearSessionReport,
     sendFrame,
     requestAnalysis,
@@ -36,10 +37,21 @@ function ZenithApp() {
     endSession,
     startSequence,
     stopSequence,
+    setIntensity,
+    persona,
+    setPersona,
   } = useZenithConnection();
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState(0);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/streaks')
+      .then(res => res.json())
+      .then(data => setCurrentStreak(data.current_streak ?? 0))
+      .catch(() => { /* streak fetch failed silently */ });
+  }, []);
 
   return (
     <div className="w-screen h-screen flex flex-col bg-zenith-bg text-gray-100 overflow-hidden">
@@ -50,6 +62,12 @@ function ZenithApp() {
         </div>
 
         <div className="flex items-center gap-3">
+          {currentStreak > 0 && (
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded bg-orange-500/10 border border-orange-500/30" title={`${currentStreak}-day streak`}>
+              <span className="text-orange-400 text-sm">&#x1F525;</span>
+              <span className="text-orange-400 text-xs font-mono font-bold">{currentStreak}</span>
+            </div>
+          )}
           <button
             onClick={() => setShowHistory(h => !h)}
             aria-label="View session history"
@@ -108,7 +126,7 @@ function ZenithApp() {
           bioFeatures={metrics?.bio_features}
           poseLabel={metrics?.label}
         />
-        <HUD metrics={metrics} advice={advice} heuristicCorrection={heuristicCorrection} onRequestAnalysis={requestAnalysis} />
+        <HUD metrics={metrics} advice={advice} heuristicCorrection={heuristicCorrection} onRequestAnalysis={requestAnalysis} breathCue={sequence?.breath_cue} />
 
         <SessionControls
           isRecording={isRecording}
@@ -118,6 +136,10 @@ function ZenithApp() {
           onToggleHarvest={toggleHarvesting}
           onEndSession={endSession}
           onStartSequence={startSequence}
+          intensity={intensity}
+          onSetIntensity={setIntensity}
+          persona={persona}
+          onSetPersona={setPersona}
         />
 
         {/* Pose Sequence Bar */}
